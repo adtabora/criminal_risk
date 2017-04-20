@@ -18,7 +18,7 @@ def getLinks():
     sitemap_urls = [loc.contents[0] for loc in  main_sitemap.findAll("loc")]
     
     #just for testing reasons...
-    sitemap_urls = sitemap_urls[1:3]
+    # sitemap_urls = sitemap_urls[1:3]
     print "number of sitemaps: %i" %len(sitemap_urls)
     
     print "- scrapping sitemaps"
