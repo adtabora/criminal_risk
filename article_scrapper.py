@@ -81,6 +81,7 @@ for i in range(84):
     print "-- Iteration %i --" %i 
     wait = random.randint(10,30)
     scrape_articles(10)
-    time.sleep(wait)
     print "- wait %i seconds" %i 
+    time.sleep(wait)
+    
 
