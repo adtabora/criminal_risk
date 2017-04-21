@@ -39,6 +39,7 @@ def getLinks():
             "url": article_urls,
             "date": article_dates
         })
-    links_df.to_csv("./files/links.csv")
+    links_df.loc[:,"scraped"] = False
+    links_df.to_csv("./files/links.csv",index=False)
      
     print "- Done."
