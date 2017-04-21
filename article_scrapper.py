@@ -1,6 +1,8 @@
 import urllib2
 import bs4 #beautiful soup
 
+import random
+import time
 import pandas as pd
 
 # using a list of links it scrapes articles and returns data
@@ -73,6 +75,12 @@ def scrape_articles(max_articles = 10):
         links_full.loc[error_index,"scraped"] == False
     links_full.to_csv("./files/links.csv",index=False)
 
-scrape_articles(20)
-
+# in order to be a "good web citizen" the scrapper will execute randomly between 10 and 30 seconds
+# so that it doesn't generate too much traffic to the website.
+for i in range(84):
+    print "-- Iteration %i --" %i 
+    wait = random.randint(10,30)
+    scrape_articles(10)
+    time.sleep(wait)
+    print "- wait %i seconds" %i 
 
