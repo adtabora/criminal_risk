@@ -18,8 +18,12 @@ def getLinks():
     sitemap_urls = [loc.contents[0] for loc in  main_sitemap.findAll("loc")]
     
     #just for testing reasons...
+    print "- extracted %i sitemaps" %len(sitemap_urls)
+    sitemap_start = 100
+    sitemap_end = 200
+    print "- processing %i through %i" %(sitemap_start,sitemap_end-1)
     sitemap_urls = sitemap_urls[1:100]
-    print "number of sitemaps: %i" %len(sitemap_urls)
+   
     
     print "- scrapping sitemaps"
     counter = 0
