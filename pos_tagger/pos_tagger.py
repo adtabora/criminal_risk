@@ -66,7 +66,6 @@ def tag_articles():
     print "- read articles csv"
     article_df = pd.read_csv("./files/articles.csv")    
 
-
     #2. Load tagger
     print "- load tagger"
     tagger = pickle.load( open( "./files/pos_tagger.p", "rb" ) )
@@ -90,9 +89,9 @@ def tag_articles():
                 tagged_sent
             ])
     
-    print "- save tagged articles to csv"
+    print "- save tagged articles to json"
     tagged_articles = pd.DataFrame(articles,columns=["article_id","sent_id","tagged_sent"])
-    tagged_articles.to_csv("./files/tagged_articles.csv",index=False)
+    tagged_articles.to_json("./files/tagged_articles.json")
 
     print "- Done."
 

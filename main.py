@@ -16,6 +16,14 @@ def main(argv):
         from pos_tagger import pos_tagger
         pos_tagger.tag_articles()
 
+    if step == "ner.train_ident":
+        from ner import ner_identifier
+        ner_identifier.train_identifier()
+
+    if step == "ner.identify":
+        from ner import ner_identifier
+        ner_identifier.tag_articles()
+
 
     
 
