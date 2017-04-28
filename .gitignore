@@ -1,3 +1,6 @@
 *.pyc
 /files/**
 /database/**
+.ipynb_checkpoints/**
+Ideas.rtf
+trashbin/**

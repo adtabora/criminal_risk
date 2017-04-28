@@ -9,18 +9,19 @@ Use local news to identify high risk locations.. and probability of something ha
 # Activities
 
 Phase 1 Data Recolection
-- Scrap news from news sites: 30%
-   - prototype of scrapper 100%
-   - prototype of save to DB
+- Scrap news from news sites: 80%
 - Get a list of Colonias in Tegucigalpa: 100%
 - basic structure 100%
 - get up cloud/git 100%
 
 -------
 Phase 2 Basic Data mining
+- Initial exploration 100%
+- Basic feature extraction 70%
+
 - Extract location of event from text
 - Extract type of event from the text ( death, robbery, assault ) 
-- Extract date of the news
+- Extract date of the news 100%
 - Extract date of event
 
 -------
