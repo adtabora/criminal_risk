@@ -1,4 +1,4 @@
-from features import extract_features
+from features import extract_ident_features
 import identifier
 
 from nltk.corpus import  conll2002
@@ -14,7 +14,7 @@ def train_identifier():
     train_sentences = conll2002.iob_sents('esp.train')
     test_sentences = conll2002.iob_sents('esp.testa')
     #2. extract features
-    train_df, test_df = extract_features(train_sentences, test_sentences)
+    train_df, test_df = extract_ident_features(train_sentences, test_sentences)
     #3. train     
     clf = identifier.train(train_df, test_df)
     
@@ -27,7 +27,7 @@ def tag_articles():
     #1. prepare data
     sentences = article_df.tagged_sent.values
     #2. extract features
-    feature_df, words_df = extract_features(sentences)
+    feature_df, words_df = extract_ident_features(sentences)
     #3. predict
     preds = identifier.predict(feature_df)
     

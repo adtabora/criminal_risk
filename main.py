@@ -24,6 +24,14 @@ def main(argv):
         from ner import ner_identifier
         ner_identifier.tag_articles()
 
+    if step == "ner.train_classif":
+        from ner import ner_classifier
+        ner_classifier.train_classifier()
+
+    if step == "ner.classify":
+        from ner import ner_classifier
+        ner_classifier.tag_articles()
+
 
     
 
