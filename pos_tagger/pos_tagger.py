@@ -10,6 +10,8 @@ import pickle
 import bs4 #beautiful soup
 import pandas as pd
 import numpy as np
+import json
+import ast
 from nltk.tokenize import word_tokenize
 
 # Function that trains a Brill Taggers using Unigram as backoff 
@@ -64,34 +66,42 @@ def train_tagger():
 def tag_articles():
     #1. read articles
     print "- read articles csv"
-    article_df = pd.read_csv("./files/articles.csv")    
+    article_df = pd.read_csv("./files/criminal_articles.csv") 
+    article_df.loc[:,"title"] = article_df.title.apply(lambda x: ast.literal_eval(x))
+    article_df.loc[:,"content"] = article_df.content.apply(lambda x: ast.literal_eval(x))
 
     #2. Load tagger
     print "- load tagger"
     tagger = pickle.load( open( "./files/pos_tagger.p", "rb" ) )
     
-    #3. Process, clean and tag
-    #source_column is to be changed in the future
-    source_column = "content" 
-    articles = []
-    print "- processing and tagging articles"
-    for art_index, article in article_df.iterrows():
-        raw_text = article[source_column]
-        soup = bs4.BeautifulSoup(raw_text, 'html.parser')
-        text = soup.get_text().replace("\n","")
-        sentences = text.split(".")
-        for sent_index in range(len(sentences)):
-            tagged_sent = tagger.tag(  word_tokenize( sentences[sent_index] ) )
-            #append
-            articles.append([
-                art_index,
-                sent_index,
-                tagged_sent
-            ])
+    #3. Tag the articles
+    print "- tagging articles"
+
+    def tagContent(content):
+        for index, sentence in enumerate(content):
+            #use only words not the NE tags
+            sentence = [ word[0] for word in sentence]
+            #tag
+            content[index] = tagger.tag(sentence)
+        return content
+
+
+    # tag the title
+    print "- tagging title"
+    article_df.loc[:,"tagged_title"] = article_df.title.apply(
+        lambda title: tagger.tag([ word[0] for word in title])
+    )
+
+    # tag the content
+    print "- tagging content"
+    article_df.loc[:,"tagged_content"] = article_df.content.apply(
+        lambda content:  tagContent(content)
+    )
     
-    print "- save tagged articles to json"
-    tagged_articles = pd.DataFrame(articles,columns=["article_id","sent_id","tagged_sent"])
-    tagged_articles.to_json("./files/tagged_articles.json")
+    print "- save tagged articles to csv"
+    article_df = article_df.drop(["title","content"], axis=1)
+    # article_df.to_json("./files/pos_articles.json")
+    article_df.to_csv("./files/pos_articles.csv",index=False, encoding='utf-8')
 
     print "- Done."
 
