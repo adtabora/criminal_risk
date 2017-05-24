@@ -79,17 +79,27 @@ def tag_articles():
 
     def tagContent(content):
         for index, sentence in enumerate(content):
-            #use only words not the NE tags
-            sentence = [ word[0] for word in sentence]
+            words = [ word[0] for word in sentence]
             #tag
-            content[index] = tagger.tag(sentence)
+            pos_sentence = tagger.tag(words)
+            #add tag to sentence
+            content[index] = [ [word[0],pos_tag[1], word[1]] for word, pos_tag in zip(sentence, pos_sentence) ]
         return content
+
+    
+    def tagTitle(title):
+        sentence = [ word[0] for word in title]
+        pos_sentence = tagger.tag(sentence)
+
+        tagged_title = [ [word[0],pos_tag[1],word[1]] for word, pos_tag in zip(title, pos_sentence) ]
+
+        return tagged_title
 
 
     # tag the title
     print "- tagging title"
     article_df.loc[:,"tagged_title"] = article_df.title.apply(
-        lambda title: tagger.tag([ word[0] for word in title])
+        lambda title: tagTitle(title)
     )
 
     # tag the content
@@ -101,7 +111,7 @@ def tag_articles():
     print "- save tagged articles to csv"
     article_df = article_df.drop(["title","content"], axis=1)
     # article_df.to_json("./files/pos_articles.json")
-    article_df.to_csv("./files/pos_articles.csv",index=False, encoding='utf-8')
+    article_df.to_csv("./files/pos_articles.csv",index=False)
 
     print "- Done."
 
