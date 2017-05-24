@@ -88,7 +88,7 @@ class NBClassifier():
 
         self.best_parameter = self.alpha[max_index]
         # train with all the data using the best param
-        self.train_test_all(train, test, labels_train, labels_test)
+        self.train_test_all(train, test)
 
 
     def train_test_all(self, train, test ):
@@ -102,9 +102,9 @@ class NBClassifier():
         X_train_content = sp.csr_matrix([])
         #vectorize
         if self.title:
-            X_train_title, X_test_title = self.vect_fit_transform(train, test, params=self.title, column="title")
+            X_train_title, X_test_title, self.title_vec = self.vect_fit_transform(train, test, params=self.title, column="title", return_vec=True)
         if self.content:
-            X_train_content, X_test_content = self.vect_fit_transform(train, test, params=self.content, column="content")
+            X_train_content, X_test_content, self.content_vec = self.vect_fit_transform(train, test, params=self.content, column="content", return_vec=True)
 
         if self.title and self.content:
             X_train = sp.hstack((X_train_title, X_train_content), format='csr')
@@ -117,24 +117,38 @@ class NBClassifier():
             X_test = X_test_content
 
         self.clf = MultinomialNB(alpha=self.best_parameter)
-        self.clf = self.clf.fit(X_train,train_labels )
+        self.clf = self.clf.fit(X_train,labels_train )
 
         #scores
         y_pred_train = self.clf.predict(X_train)
-        prec, rec, f1, supp = precision_recall_fscore_support(train_labels,y_pred_train)
+        prec, rec, f1, supp = precision_recall_fscore_support(labels_train,y_pred_train)
         self.precision["train"] = prec[0]
         self.recall["train"] = rec[0]
         self.fscore["train"] = f1[0]
 
         y_pred_test = self.clf.predict(X_test)
-        prec, rec, f1, supp = precision_recall_fscore_support(test_labels, y_pred_test)
+        prec, rec, f1, supp = precision_recall_fscore_support(labels_test, y_pred_test)
         self.precision["test"] = prec[1]
         self.recall["test"] = rec[1]
         self.fscore["test"] = f1[1]
 
+    def predict_log_proba(self, df):
+        if self.title:
+            X_title = self.title_vec.transform(df.title.values)
+        if self.content:
+            X_content = self.content_vec.transform(df.content.values)
+
+        if self.title and self.content:
+            X = sp.hstack((X_title, X_content), format='csr')
+        elif self.title:
+            X = X_title
+        elif self.content:
+            X = X_content
+            
+        return self.clf.predict_log_proba(X)
 
 
-    def vect_fit_transform(self, train_df, test_df, params, column):
+    def vect_fit_transform(self, train_df, test_df, params, column, return_vec=False):
         vectorizer = CountVectorizer(
                 min_df= params["min"] ,        max_df= params["max"], 
                 ngram_range= params["ngram"],  binary= params["binary"],
@@ -145,8 +159,10 @@ class NBClassifier():
         vectorizer.fit(train_df[train_df["category"]=="Criminal"][column].values)
         X_train = vectorizer.transform(train_df[column].values)
         X_test = vectorizer.transform(test_df[column].values)
-
-        return X_train, X_test
+        if return_vec:
+            return X_train, X_test, vectorizer
+        else:
+            return X_train, X_test
 
 
 
