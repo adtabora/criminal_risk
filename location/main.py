@@ -5,7 +5,7 @@ import pandas as pd
 
 from sklearn.preprocessing import LabelEncoder
 
-#TEST HERE 
+# read 
 articles_df = pd.read_csv("../files/pos_articles.csv")
 sentences_df = process.convertToSentences(articles_df)
 
