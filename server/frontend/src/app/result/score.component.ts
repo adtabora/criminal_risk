@@ -12,18 +12,21 @@ import { Component, Input } from '@angular/core';
         <table class="table table-hover" *ngIf="scores">
             <thead>
                 <tr>
-                    <th> Class </th>
+                    <th> Label </th>
                     <th> Precision </th>
                     <th> Recall </th>
-                    <th> f1 </th>
+                    <th> f score </th>
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let score of scores" >
-                    <td> <b>Criminal </b> </td>
-                    <td> {{score.precision}}% </td>
-                    <td> {{score.recall}}% </td>
-                    <td> {{score.f1}}% </td>
+                <tr *ngFor="let score of scores; let i=index" >
+                    <td>   
+                        <b *ngIf="labels"> {{labels[i]}} </b> 
+                        <b *ngIf="!labels"> {{i}} </b> 
+                    </td>
+                    <td> {{ (score.precision * 100.0).toFixed(2) }}% </td>
+                    <td> {{ (score.recall * 100.0).toFixed(2) }}% </td>
+                    <td> {{ (score.fscore * 100.0).toFixed(2) }}% </td>
                 </tr>
             <tbody>
         </table>
@@ -40,6 +43,7 @@ import { Component, Input } from '@angular/core';
 export class ScoreComponent {
     @Input() title : string
     @Input() scores : any[]
+    @Input() labels: any[]
 
 
   

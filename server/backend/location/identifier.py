@@ -1,6 +1,8 @@
 from classifiers import initialize_classifiers
 
 
+
+
 # formats in X and y
 def getXY(df, dropColumns):
     X = df.drop(dropColumns, 1).values
@@ -39,6 +41,9 @@ def get_stacked_features(df, lvl_1_classifiers):
     return df
 
 
+
+
+
 # TRAIN
 def train_identifier(features_train, features_test):
     print "- format into X and y"
@@ -50,12 +55,13 @@ def train_identifier(features_train, features_test):
     lvl_1_classifiers, lv2_classifier = initialize_classifiers()
 
     print "- start processing classifiers"
+    lvl1_scores = []
     for index, clf in enumerate(lvl_1_classifiers):
         print "-- training classifier %i" %index
         clf.train(X_train, y_train, scores=True)
         print "-- predicting classifier %i" %index
-        preds_train, preds_test = clf.predict_score(X_train, y_train, X_test, y_test)
-
+        preds_train, preds_test, clf_score = clf.predict_score(X_train, y_train, X_test, y_test)
+        lvl1_scores.append(clf_score)
 
         features_train.loc[:,"pred_"+str(index)] = preds_train
         features_test.loc[:,"pred_"+str(index)] = preds_test
@@ -73,10 +79,14 @@ def train_identifier(features_train, features_test):
     lv2_classifier.train( X_train, y_train, scores=True)
 
     print "- predicting lv2"
-    preds_train, preds_test = lv2_classifier.predict_score(X_train, y_train, X_test, y_test)
+    preds_train, preds_test, lv2_score = lv2_classifier.predict_score(X_train, y_train, X_test, y_test)
 
+    
+        
+    #return scores
+    scores = {"lvl1": lvl1_scores, "lvl2":  lv2_score}
 
-    return preds_train, preds_test
+    return preds_train, preds_test, scores
 
 
 

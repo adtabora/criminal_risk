@@ -71,5 +71,11 @@ def score_entities(true, pred):
     fscore = (precision + recall) / 2.0
     print "fscores: %0.4f" %fscore
 
+    return {
+        "precision": precision,
+        "recall": recall,
+        "fscore": fscore
+    }
+
     
     

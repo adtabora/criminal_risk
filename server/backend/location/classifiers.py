@@ -1,4 +1,4 @@
-from sklearn.metrics import f1_score, make_scorer, classification_report
+from sklearn.metrics import f1_score, make_scorer, classification_report, precision_recall_fscore_support
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 
@@ -21,11 +21,33 @@ class Classifier:
         print "- Train Results -"
         preds_train = self.clf.predict(X_train)
         print(classification_report(y_train, preds_train,labels=[0,1]))
+        
         print "- Test Results -"
         preds_test = self.clf.predict(X_test)
         print(classification_report(y_test, preds_test,labels=[0,1]))
 
-        return preds_train, preds_test
+        #score
+        train_scores = precision_recall_fscore_support(y_train, preds_train,labels=[0,1])
+       
+        test_scores = precision_recall_fscore_support(y_test, preds_test,labels=[0,1])
+
+        def format_result(scores):
+            data = []
+            for i in range(0,2):
+                data.append({
+                    "precision": scores[0][i],
+                    "recall": scores[1][i],
+                    "fscore": scores[2][i],
+                    "support": scores[3][i],
+                })
+            return data
+                
+
+        score = {
+            "train": format_result(train_scores),
+            "test": format_result(test_scores)
+        }
+        return preds_train, preds_test, score
 
     # Only return predictions
     def predict(self, X):

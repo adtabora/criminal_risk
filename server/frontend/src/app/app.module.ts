@@ -10,6 +10,7 @@ import {MdButtonModule, MdButtonToggleModule, MdListModule} from '@angular/mater
 import {MdIconModule} from '@angular/material';
 import {MdSidenavModule} from '@angular/material'
 import {MdToolbarModule} from '@angular/material';
+import {MdProgressSpinnerModule} from '@angular/material';
 
 
 import { AppComponent }  from './app.component';
@@ -51,6 +52,7 @@ const appRoutes: Routes = [
     MdIconModule,MdSidenavModule,
     MdChipsModule, MdToolbarModule,
     MdInputModule, MdSelectModule,
+    MdProgressSpinnerModule,
     RouterModule.forRoot(appRoutes)
   ],
   declarations: [
