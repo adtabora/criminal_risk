@@ -7,21 +7,30 @@ import { ResultsService } from '../services/results.service';
   template: `
   <div class="container-fluid">
     
-    <h3> Topic Classifier <small> </small></h3>
+    <h3> Topic Classifier <small> </small>
+      <button md-button md-raised-button (click)="runTopic()" color="primary">
+        Run Classifier
+      </button>
+    </h3>
     <hr style="margin-top:0px">
     <div class="row" >
       <div  class="col-sm-6">
-        <score title="Train Scores" [scores]="scores"></score>
+        <score title="Train Scores" 
+          [scores]="topicScore.train" 
+          [labels]="['Criminal']"
+        ></score>
       </div>
       <div  class="col-sm-6">
-        <score title="Test Scores"></score>
+        <score title="Test Scores"
+          [scores]="topicScore.test" 
+          [labels]="['Criminal']"
+        ></score>
       </div>
     </div>
 
     
     
     <h3> Location Identifier <small>Entity based</small>
-      
       <button md-button md-raised-button (click)="runIdentifier()" color="primary">
         Run Identifier
       </button>
@@ -124,6 +133,7 @@ export class ResultsComponent {
 
     entityScore = { train:<any>null, test: <any>null}
     tokenScore = { train:<any>null, test: <any>null}
+    topicScore = { train:<any>null, test: <any>null}
 
     lvl1_scores = <any>[]
 
@@ -135,8 +145,7 @@ export class ResultsComponent {
 
   getResults(): void{
     var self = this
-    this.resultsService.getResults().then(function(response){
-        console.log(response);
+    this.resultsService.getIdentifierResults().then(function(response){
         //formating for component input
         self.entityScore.train = [response.entity_score.train];
         self.entityScore.test = [response.entity_score.test];
@@ -146,8 +155,10 @@ export class ResultsComponent {
 
         //lvl1
         self.lvl1_scores = response.lvl1;
-        
-        
+    });
+
+    this.resultsService.getTopicResults().then(function(response){
+        self.topicScore = response.lvl2
     });
   }
 
@@ -167,6 +178,15 @@ export class ResultsComponent {
       //lvl1
       self.lvl1_scores = response.lvl1;
 
+    });
+  }
+
+  runTopic(): void{
+    var self = this
+    this.waiting = true
+    this.resultsService.runTopic().then(function(response){
+      self.waiting = false
+      self.topicScore = response.lvl2
     });
   }
 
