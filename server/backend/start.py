@@ -25,28 +25,47 @@ def test():
         }
     })    
 
-@app.route('/results')
-def getResults():
+@app.route('/identifier/results')
+def getIdentifierResults():
     with open('../../files/identifier_scores.json', 'r') as file:
         results = json.load(file)
-
     return jsonify(results)
 
-@app.route('/runIdentifier')
+@app.route('/identifier/run')
 def runIdentifier():
-
     #Making an import from the parent directory
-    import sys
     from location import main
     #execute the identifier
     main.execute_identifier()
 
     with open('../../files/identifier_scores.json', 'r') as file:
         results = json.load(file)
+        
+    return jsonify(results)
 
+@app.route('/topic/results')
+def getTopicResults():
+    with open('../../files/topic_scores.json', 'r') as file:
+        results = json.load(file)
     return jsonify(results)
 
 
+
+
+@app.route('/topic/run')
+def runTopic():
+    #Making an import from the parent directory
+    from topic import topic_classifier
+    #execute the identifier
+    topic_classifier.execute()
+
+    with open('../../files/topic_scores.json', 'r') as file:
+        results = json.load(file)
+        
+    return jsonify(results)
+
+
+# ----------- MAIN ----------- #
 if __name__ == "__main__":
     # app.run(host='0.0.0.0')
 

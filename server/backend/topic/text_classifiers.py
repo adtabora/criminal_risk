@@ -6,7 +6,7 @@ from sklearn.metrics import precision_recall_fscore_support
 import scipy.sparse as sp
 
 import pandas as pd
-stop_words = pd.read_json("../files/stopwords.json")[0].values.tolist()
+stop_words = pd.read_json("../../files/stopwords.json")[0].values.tolist()
 
 # A Multinomial Naive Bayes Classifier
 class NBClassifier():

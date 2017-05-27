@@ -30,7 +30,7 @@ def combine_preds(df, classifiers):
 def execute():
     #1. Read data
     print "- reading documents csv"
-    documents_df = pd.read_csv("../files/documents.csv")
+    documents_df = pd.read_csv("../../files/documents.csv")
 
     #2. Preprocess data (eliminate nulls, eliminate ambiguous)
     print "- preprocess data"
@@ -112,22 +112,50 @@ def execute():
     
     clf.fit(train_stacked, train_labels)
 
-    stacked_preds = clf.predict(test_stacked)
-    precision, recall, fscore, support =  precision_recall_fscore_support(test_labels,stacked_preds)
+    
 
     print 
     print "--- FINAL SCORES ---"
-
+    print
+    print "-- TRAIN SCORES --"
+    stacked_preds = clf.predict(train_stacked)
+    train_precision, train_recall, train_fscore, train_support =  precision_recall_fscore_support(train_labels,stacked_preds)
+    print "precision %0.4f" %train_precision[1]
+    print "recall %0.4f" %train_recall[1]
+    print "fscore %0.4f" %train_fscore[1]
+    print "support %0.4f" %train_support[1]
+    print
+    print "-- TEST SCORES --"
+    stacked_preds = clf.predict(test_stacked)
+    precision, recall, fscore, support =  precision_recall_fscore_support(test_labels,stacked_preds)
     print "precision %0.4f" %precision[1]
     print "recall %0.4f" %recall[1]
     print "fscore %0.4f" %fscore[1]
     print "support %0.4f" %support[1]
 
-    
+    scores = {
+        "lvl2" : {
+            "train": [{
+                "precision": train_precision[1],
+                "recall": train_recall[1],
+                "fscore": train_fscore[1],
+                "support": train_support[1],
+            }],
+            "test": [{
+                "precision": precision[1],
+                "recall": recall[1],
+                "fscore": fscore[1],
+                "support": support[1],
+            }]
+        }
+    }
+
+    # Save results
+    print "- Saving Results"
+    import json
+    with open('../../files/topic_scores.json', 'w') as file:
+        json.dump(scores, file)
 
     
 
 
-
-
-execute()
