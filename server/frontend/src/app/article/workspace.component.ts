@@ -1,112 +1,93 @@
 import { Component,Input } from '@angular/core';
-import {tagged_word} from './word.class'
-
-
 
 @Component({
   selector: 'workspace',
   template: `
-    <div style="display:flex;flex-wrap:wrap; margin:10px; font-size:x-large;">
-      <word-tag *ngFor="let w of article.title; let word_i=index"
-            [attr.id]=" '_' + word_i"
-            [word]="w" 
-            (click) = "tagTitleWord(word_i)"
-        > 
-      </word-tag>
-    </div>
-  
-    <div>
-      <div *ngFor="let sentence of article.sentences; let sent_i=index" style="display:flex;flex-wrap:wrap">
-        <word-tag *ngFor="let w of sentence; let word_i=index"
-            [attr.id]="sent_i + '_' + word_i"
+  <div class="workspace">
+    <md-toolbar>
+      <md-input-container>
+        <input mdInput placeholder="Gold Category" [value]="goldTopic" disabled>
+      </md-input-container>
+      <md-input-container>
+        <input mdInput placeholder="Predicted Category" [value]="predTopic" disabled>
+      </md-input-container>
+    </md-toolbar>
 
-            [word]="w" 
-            (click) = "tagContentWord(sent_i,word_i)"
-        > 
-        </word-tag>
-        <br/>
-        <br/>
-      </div>
+    <md-card style="margin:10px" *ngIf="entityTab">
+        <h3> Legend </h3>
+        <p>
+          <span class="bg-success legend"> True Positive </span>
+          <span class="legend"> True Negative </span>
+          <span class="bg-danger legend"> False Positive </span>
+          <span class="bg-warning legend"> False Negative </span>
+        </p>
+
+    </md-card>
+
+    <md-card style="margin:10px">
+      <h1> {{title}} </h1>
+    <div class="article-content">
+      <p *ngFor="let sentence of sentences">
+        <span *ngFor="let chunk of sentence" [class]="chunk[1]">
+          {{chunk[0]}}
+        </span> 
+      </p>
     </div>
+    </md-card>
+  </div>
     `,
     styles:[`
     .word:hover {
         background-color: lightblue;
     }
+    label {
+      font-weight: 100;
+    }
+    md-toolbar {
+      margin: 16px
+    }
+    md-input-container {
+      margin-right: 10px
+    }
+    span {
+      padding: 5px;
+    }
+    .legend {
+      margin-right: 20px
+    }
+
     `]
 })
 
 export class WorkspaceComponent {
-  @Input() tag: String
-  @Input() color: String
-  @Input() article: any
+  @Input() goldTopic : string
+  @Input() predTopic : string
+  @Input() title : string
+  @Input() entityTab: boolean
+  @Input() sentences : any[];
 
-
-  tagContentWord(sent_id: number,  word_id: number ): void{
-    var sentence = this.article.sentences[sent_id]
-    this.article.sentences[sent_id] = this.tag_word(sentence, word_id)
-  }
-
-  tagTitleWord( word_id: number ): void{
-    var sentence = this.article.title
-    this.article.title = this.tag_word(sentence, word_id)
-  }
-
-
-  // Tagger
-  tag_word(sentence: Array<any>, word_id: number ){
-    var tag : String;
-    let word = sentence[word_id];
-
-    // check if it is the same tag which in that case put a none tag
-    if (word.tag.substr(2) == this.tag){
-      sentence[word_id] = {
-        word: word.word,
-        tag: "none"
-      };
-      console.log("none");
-      //check the next word and correct it if necessary
-      if ( sentence.length -1 > word_id){
-        let next = sentence[word_id+1]
-        if ( next.tag == tag ){
-          sentence[word_id +1].tag = "B-" + this.tag
+  ngOnInit(): void{{
+    this.sentences.forEach(sentence => {
+      for (var i = 0; i < sentence.length; i++) {
+        switch (sentence[i][1]){
+          case "TP":
+            sentence[i][1] = "bg-success";
+            break;
+          case "FP":
+            sentence[i][1] = "bg-danger";
+            break;
+          case "TN":
+            sentence[i][1] = "";
+            break;
+          case "FN":
+            sentence[i][1] = "bg-warning";
+            break;    
         }
       }
-
-      return sentence
-    }
-
-    // check if the word is the first of its tag type
-    if (word_id == 0){
-      tag = "B-" + this.tag;
-    }else{
-      let before = sentence[word_id-1];
-      if( before.tag.substr(2) == this.tag ){
-        tag = "I-" + this.tag;
-      } else{
-        tag = "B-" + this.tag;
-      }
-    }
-
-    //if the word is the first of its tag type check and correct the next one
-    if ( tag[0] == "B" && sentence.length -1 > word_id){
-      let next = sentence[word_id+1]
-      if ( next.tag == tag ){
-        sentence[word_id +1].tag = "I-" + this.tag
-      }
-    }
-
-    // create a new object because this way it will trigger the update routine
-    sentence[word_id] = {
-      word: word.word, 
-      tag:  tag
-    };
-    
-    return sentence
+    });
   }
 
-  
-  
+ 
   
 
    

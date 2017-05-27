@@ -9,39 +9,24 @@ import { ArticlesService } from '../services/articles.service';
   <md-sidenav-container style="height:100vh;">
     <md-sidenav #sidenav mode="side" opened="true">
       <left-panel
-        [todo]="todo"
-        [count]="count"
+        [topicList]= "topicList" 
+        [topicCount]= "topicCount"
+        [entityList]= "entityList"
+        [entityCount]= "entityCount"
+
         (setArticle)="getArticle($event)"
         (filterArticles)="getArticleList($event)"
+        (selectTab)="setTab($event)"
       ></left-panel>
     </md-sidenav>
 
-    <md-sidenav #sidenav mode="side" opened="true" align="end">
-      <right-panel
-        (setTag)="setTag($event)"
-      ></right-panel>
-    </md-sidenav>
-
-    <div class="workspace" *ngIf="article">
-      <md-toolbar>
-        <md-select placeholder="Category" 
-          [(ngModel)]="article.category" >
-            <md-option *ngFor="let category of categories" [value]="category">
-              {{ category }}
-            </md-option>
-          </md-select>
-        
-        <md-input-container>
-          <input mdInput placeholder="Location" [(ngModel)]="article.location" disabled="true">
-        </md-input-container>
-        <button md-raised-button color="primary" (click)="saveArticle()">
-          Save
-        </button>
-      </md-toolbar>
+    <div class="workspace" >      
       <workspace
-        [tag]= "tag" 
-        [color]= "color" 
-        [article]= "article" 
+        [title] = "article.title"
+        [sentences] = "article.sentences"
+        [entityTab] = "entityTab"
+        [goldTopic] = "article.goldTopic" 
+        [predTopic] = "article.predTopic" 
       ></workspace>
     </div>
 
@@ -55,41 +40,73 @@ import { ArticlesService } from '../services/articles.service';
 })
 
 export class ArticleEditorComponent {
-    title = 'main';
-    tag = "Per";
-    color = "warn";
+    article = {
+        title:  "Un perrito se escapa de su casa!" ,
+        goldTopic: "Criminal",
+        predTopic: "Criminal",
+        sentences :[ 
+            [
+            ["En horas de la madrugada se encontró en la colonia", "TN"],
+            ["Miramontes","TP"],
+            ["el prerrito", "TN"],
+            ["Sean", "FP"],
+            ["quien se habia escapado de su casa en", "TN"],
+            ["Loarque", "FN"],
+            [".", "TN"]
+            ]
+        ]
+    };
+    
+    entityTab: boolean;
+    topicList: any[];
+    topicCount: number;
+    entityList: any[];
+    entityCount: number;
 
-    todo : any[];
-    count : number;
 
-    article: any;
     filters: any;
 
-    categories = [ "Criminal","Other","Criminal-Other" ];
 
     ngOnInit(): void{
     // this.getArticleList()
     }
 
-    setTag(obj:any):void{
-    this.tag = obj.tag;
-    this.color = obj.color;
+    setTab(tab: string):void{
+        if (tab == "entity"){
+            this.entityTab = true;
+            this.topicList= []
+        }else{
+            this.entityTab = false;
+            this.entityList= []
+        }
     }
 
-    getArticleList(filters: any):void{
-    this.filters = filters;
-    var self = this;
-    this.articleService.listArticles(filters).then(function(response){
-        self.todo = response.data; 
-        self.count = response.count;
-        if( self.todo.length > 0 ){
-        self.getArticle(self.todo[0].id);
-        } else {
-        self.article = null
-        }
-        
-        
-    });
+    getTopicList(filters: any):void{
+        this.filters = filters;
+        var self = this;
+        this.articleService.listTopicArticles(filters).then(function(response){
+            self.topicList = response.data; 
+            self.topicCount = response.count;
+            if( self.topicList.length > 0 ){
+                self.getArticle(self.topicList[0].id);
+            } else {
+                self.article = null
+            }
+        });
+    }
+
+    getEntityList(filters: any):void{
+        this.filters = filters;
+        var self = this;
+        this.articleService.listEntityArticles(filters).then(function(response){
+            self.entityList = response.data; 
+            self.entityCount = response.count;
+            if( self.entityList.length > 0 ){
+                self.getArticle(self.entityList[0].id);
+            } else {
+                self.article = null
+            }
+        });
     }
 
     getArticle(id:number):void{

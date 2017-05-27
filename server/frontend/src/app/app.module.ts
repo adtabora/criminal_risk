@@ -11,11 +11,18 @@ import {MdIconModule} from '@angular/material';
 import {MdSidenavModule} from '@angular/material'
 import {MdToolbarModule} from '@angular/material';
 import {MdProgressSpinnerModule} from '@angular/material';
+import {MdChipsModule} from '@angular/material'
+import {MdInputModule, MdSelectModule} from '@angular/material';
+import {MdTabsModule} from '@angular/material';
+import {MdCheckboxModule} from '@angular/material';
+import {MdCardModule} from '@angular/material';
 
 
 import { AppComponent }  from './app.component';
 import { ArticleEditorComponent }  from './article/article-editor.component';
 import { LeftPanelComponent }  from './article/left.component';
+import { LeftTopicComponent }  from './article/left-topic.component';
+import { LeftEntityComponent }  from './article/left-entity.component';
 import { RightPanelComponent }  from './article/right.component';
 import { WorkspaceComponent }  from './article/workspace.component';
 import { WordComponent }  from './article/word.component';
@@ -24,8 +31,7 @@ import { MapComponent }  from './map/map.component';
 import { ResultsComponent }  from './result/results.component';
 import { ScoreComponent }  from './result/score.component';
 
-import {MdChipsModule} from '@angular/material'
-import {MdInputModule, MdSelectModule} from '@angular/material';
+
 
 const appRoutes: Routes = [
   {
@@ -51,13 +57,15 @@ const appRoutes: Routes = [
     MdListModule,
     MdIconModule,MdSidenavModule,
     MdChipsModule, MdToolbarModule,
-    MdInputModule, MdSelectModule,
+    MdInputModule, MdSelectModule, MdCheckboxModule,
     MdProgressSpinnerModule,
+    MdTabsModule,MdCardModule,
     RouterModule.forRoot(appRoutes)
   ],
   declarations: [
     AppComponent,
-    ArticleEditorComponent, LeftPanelComponent, RightPanelComponent, WorkspaceComponent, WordComponent, 
+    ArticleEditorComponent,  RightPanelComponent, WorkspaceComponent, WordComponent, 
+    LeftPanelComponent, LeftTopicComponent,LeftEntityComponent,
     MapComponent, 
     ResultsComponent,ScoreComponent
   ],
