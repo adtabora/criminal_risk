@@ -118,16 +118,16 @@ def execute():
     print "--- FINAL SCORES ---"
     print
     print "-- TRAIN SCORES --"
-    stacked_preds = clf.predict(train_stacked)
-    train_precision, train_recall, train_fscore, train_support =  precision_recall_fscore_support(train_labels,stacked_preds)
+    stacked_preds_train = clf.predict(train_stacked)
+    train_precision, train_recall, train_fscore, train_support =  precision_recall_fscore_support(train_labels,stacked_preds_train)
     print "precision %0.4f" %train_precision[1]
     print "recall %0.4f" %train_recall[1]
     print "fscore %0.4f" %train_fscore[1]
     print "support %0.4f" %train_support[1]
     print
     print "-- TEST SCORES --"
-    stacked_preds = clf.predict(test_stacked)
-    precision, recall, fscore, support =  precision_recall_fscore_support(test_labels,stacked_preds)
+    stacked_preds_test = clf.predict(test_stacked)
+    precision, recall, fscore, support =  precision_recall_fscore_support(test_labels,stacked_preds_test)
     print "precision %0.4f" %precision[1]
     print "recall %0.4f" %recall[1]
     print "fscore %0.4f" %fscore[1]
@@ -150,11 +150,26 @@ def execute():
         }
     }
 
-    # Save results
-    print "- Saving Results"
+    # Save scores
+    print "- Saving Scores"
     import json
     with open('../../files/topic_scores.json', 'w') as file:
         json.dump(scores, file)
+
+
+    # Save the results
+    print "- Saving results"
+    results_df = pd.DataFrame({
+        "art_id": train_df["id"].values.tolist() + test_df["id"].values.tolist(),
+        "gold": train_df["category"].values.tolist() + test_df["category"].values.tolist(),
+        "pred": stacked_preds_train.tolist() + stacked_preds_test.tolist(),
+        "data_set": ["train" for i in range(train_df.shape[0])] +  ["test" for i in range(test_df.shape[0])] 
+    })
+
+    # format the predictions
+    results_df.loc[:,"pred"] = results_df.pred.apply(lambda x: "Other" if x==0 else "Criminal")
+    
+    results_df.to_csv("../../files/documents_classified.csv",index=False)
 
     
 

@@ -55,10 +55,26 @@ def execute_identifier():
         "test": test_score
     }
 
-    # Save results
-    print "- Saving Results"
+    # Save scores
+    print "- Saving Scores"
     import json
     with open('../../files/identifier_scores.json', 'w') as file:
         json.dump(scores, file)
+
+    # Save results
+    print "- Saving Results"
+
+    result_train = words_train
+    # result_train.loc[:,"word"] =result_train.word.apply(lambda x: unicode(x,"utf8") )
+    result_train.loc[:,"pred"] = le_iob.inverse_transform(pred_train)
+    result_train.loc[:,"dataset"] = "train"
+
+    result_test = words_test
+    # result_test.loc[:,"word"] =result_test.word.apply(lambda x: unicode(x,"utf8") )
+    result_test.loc[:,"pred"] = le_iob.inverse_transform(pred_test)
+    result_test.loc[:,"dataset"] = "test"
+
+    results_df = pd.concat([result_train, result_test])
+    results_df.to_csv("../../files/words_classified.csv",index=False, encoding="utf-8")
 
 
