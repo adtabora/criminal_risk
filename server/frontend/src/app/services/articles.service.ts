@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {tagged_word} from '../article/word.class'
+
 import { Headers, Http , RequestOptions} from '@angular/http';
 
 
@@ -10,21 +10,21 @@ export class ArticlesService {
 
    constructor(private http: Http) { }
      
-   listUrl = "http://127.0.0.1:5000/article/list"
-   getUrl = "http://127.0.0.1:5000/article/get/"
-   saveUrl = "http://127.0.0.1:5000/article/save"
+   listTopicUrl = "http://127.0.0.1:5000/topic/list"
+   getTopicUrl = "http://127.0.0.1:5000/topic/get/"
+
+   listEntityUrl = "http://127.0.0.1:5000/entity/list"
+   getEntityUrl = "http://127.0.0.1:5000/entity/get/"
 
     listTopicArticles(filters: any): Promise<any>{
         let headers = new Headers({ 'Content-Type': 'application/json' });
-
         let body = filters;
-
         let options = new RequestOptions({ 
             headers: headers,
             params: body,
          });
 
-        return this.http.get(this.listUrl, options)
+        return this.http.get(this.listTopicUrl, options)
                .toPromise()
                .then(function(response){
                     return response.json();
@@ -34,24 +34,22 @@ export class ArticlesService {
 
     listEntityArticles(filters: any): Promise<any>{
         let headers = new Headers({ 'Content-Type': 'application/json' });
-
         let body = filters;
-
         let options = new RequestOptions({ 
             headers: headers,
             params: body,
          });
 
-        return this.http.get(this.listUrl, options)
+        return this.http.get(this.listEntityUrl, options)
                .toPromise()
                .then(function(response){
                     return response.json();
                })
                .catch(this.handleError);
     }
-
-    getArticle(id:number): any{
-        return this.http.get(this.getUrl+id)
+   
+    getTopicArticle(id:number): any{
+        return this.http.get(this.getTopicUrl+id)
                .toPromise()
                .then(function(response){
                     
@@ -60,12 +58,8 @@ export class ArticlesService {
                .catch(this.handleError);
     }
 
-   
-    saveArticle(article:any): any{
-        let headers = new Headers({ 'Content-Type': 'application/json' });
-        let options = new RequestOptions({ headers: headers });
-
-        return this.http.post(this.saveUrl,article, options)
+    getEntityArticle(id:number): any{
+        return this.http.get(this.getEntityUrl+id)
                .toPromise()
                .then(function(response){
                     

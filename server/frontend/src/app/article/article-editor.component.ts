@@ -21,12 +21,12 @@ import { ArticlesService } from '../services/articles.service';
     </md-sidenav>
 
     <div class="workspace" >      
-      <workspace
+      <workspace *ngIf="article" 
         [title] = "article.title"
         [sentences] = "article.sentences"
         [entityTab] = "entityTab"
-        [goldTopic] = "article.goldTopic" 
-        [predTopic] = "article.predTopic" 
+        [goldTopic] = "article.gold" 
+        [predTopic] = "article.pred" 
       ></workspace>
     </div>
 
@@ -40,45 +40,54 @@ import { ArticlesService } from '../services/articles.service';
 })
 
 export class ArticleEditorComponent {
-    article = {
-        title:  "Un perrito se escapa de su casa!" ,
-        goldTopic: "Criminal",
-        predTopic: "Criminal",
-        sentences :[ 
-            [
-            ["En horas de la madrugada se encontró en la colonia", "TN"],
-            ["Miramontes","TP"],
-            ["el prerrito", "TN"],
-            ["Sean", "FP"],
-            ["quien se habia escapado de su casa en", "TN"],
-            ["Loarque", "FN"],
-            [".", "TN"]
-            ]
-        ]
-    };
+    article = {};
     
     entityTab: boolean;
     topicList: any[];
     topicCount: number;
+    topicFilters = {
+            tp: true,
+            fp: false,
+            tn: false,
+            fn: false,
+            dataset: "train"
+        };
     entityList: any[];
     entityCount: number;
+    entityFilters = { dataset: "test"};
 
 
     filters: any;
 
 
     ngOnInit(): void{
-    // this.getArticleList()
+        this.getTopicList(this.topicFilters);
     }
 
     setTab(tab: string):void{
         if (tab == "entity"){
             this.entityTab = true;
             this.topicList= []
+            this.getEntityList(this.entityFilters)
         }else{
             this.entityTab = false;
             this.entityList= []
+            this.getTopicList(this.topicFilters)
         }
+    }
+
+    //general function
+    getArticleList(filters: any ):void {
+        
+        if (this.entityTab){
+            this.entityFilters = filters; 
+            this.getEntityList(filters);
+        }else{
+            //save the filters to re-use them when changing tabs
+            this.topicFilters = filters; 
+            this.getTopicList(filters);
+        }
+
     }
 
     getTopicList(filters: any):void{
@@ -88,10 +97,17 @@ export class ArticleEditorComponent {
             self.topicList = response.data; 
             self.topicCount = response.count;
             if( self.topicList.length > 0 ){
-                self.getArticle(self.topicList[0].id);
+                self.getTopicArticle(self.topicList[0].id);
             } else {
                 self.article = null
             }
+        });
+    }
+
+    getTopicArticle(id:number):void{
+        var self = this;
+        this.articleService.getTopicArticle(id).then(function(article:any){
+            self.article = article
         });
     }
 
@@ -110,52 +126,19 @@ export class ArticleEditorComponent {
     }
 
     getArticle(id:number):void{
-    var self = this;
-    this.articleService.getArticle(id).then(function(article:any){
-        // console.log("----")
-        // console.log(article)
-        self.article = article
+        var self = this;
+        if (this.entityTab){
+            this.articleService.getEntityArticle(id).then(function(article:any){
+                self.article = article
 
-    });
-    }
-
-    saveArticle():void{
-    var self = this;
-    this.article.reviewed = this.isArticleTagged();
-    this.articleService.saveArticle(this.article )
-    .then(function(response:any){
-        // console.log("----")
-        // console.log(response)
-        self.getArticleList(self.filters);
-
-    });
-    }
-
-    //TODO: implement this function
-    isArticleTagged():Boolean{
-    for (var i = 0; i < this.article.sentences.length; i++) {
-        var sentence = this.article.sentences[i];
-        for (var j = 0; j < sentence.length; j++) {
-        if(sentence[j].tag != "none"){
-            return true;
-        }
+            });
+        } else {
+            this.articleService.getTopicArticle(id).then(function(article:any){
+                self.article = article
+            });
         }
     }
-    return false
-    }
 
-    moveToDone(article: any){
-
-
-    let index = this.todo.findIndex(art=> art.id = article.id);
-    console.log("INDEX-----")
-    console.log(index)
-    if (index > -1) {
-        this.todo.splice(index, 1);
-    }
-
-    this.getArticle(this.todo[0].id)
-    }
 
     constructor(private articleService: ArticlesService) { }
 

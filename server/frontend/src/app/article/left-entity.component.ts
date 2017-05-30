@@ -66,7 +66,6 @@ export class LeftEntityComponent {
   changeFilters():void{
     var category = this.categoryFilter
     
-    
     this.filterArticles.emit({
       category: category,
       tag: this.tagFilter,

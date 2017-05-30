@@ -11,7 +11,7 @@ export class ResultsService {
    constructor(private http: Http) { }
      
    identifierResultsUrl = "http://127.0.0.1:5000/identifier/results"
-   runIdentifierUrl = "http://127.0.0.1:5000/dentifier/run"
+   runIdentifierUrl = "http://127.0.0.1:5000/identifier/run"
 
    topicResultsUrl = "http://127.0.0.1:5000/topic/results"
    runTopicUrl = "http://127.0.0.1:5000/topic/run"

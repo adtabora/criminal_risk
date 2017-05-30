@@ -146,7 +146,9 @@ def getEntityArticle(id):
     #read the csv
     classified_df = pd.read_csv("../../files/words_classified.csv")
     documents_df = pd.read_csv("../../files/documents.csv")
+    classified_docs_df = pd.read_csv("../../files/documents_classified.csv")
 
+    categories = classified_docs_df[classified_docs_df["art_id"]==int(id)][["gold","pred"]].iloc[0]
     document = documents_df[documents_df["id"]==int(id)].iloc[0]
     article_words = classified_df[classified_df["art_id"]==int(id)]
 
@@ -154,22 +156,23 @@ def getEntityArticle(id):
     print "- Confucius analysis"
     #TP
     conditions = (article_words["iob_tag"].isin(["B-Loc","I-Loc"])) & (article_words["pred"].isin(["B-Loc","I-Loc"]))
-    article_words.at[conditions,"conf"] = "tp"
+    article_words.at[conditions,"conf"] = "TP"
     #FP
     conditions = (article_words["iob_tag"].isin(["none"])) & (article_words["pred"].isin(["B-Loc","I-Loc"]))
-    article_words.at[conditions,"conf"] = "fp"
+    article_words.at[conditions,"conf"] = "FP"
     #TN
     conditions = (article_words["iob_tag"].isin(["none"])) & (article_words["pred"].isin(["none"]))
-    article_words.at[conditions,"conf"] = "tn"
+    article_words.at[conditions,"conf"] = "TN"
     #FN
     conditions = (article_words["iob_tag"].isin(["B-Loc","I-Loc"])) & (article_words["pred"].isin(["none"]))
-    article_words.at[conditions,"conf"] = "fn"
+    article_words.at[conditions,"conf"] = "FN"
 
 
     # Brackets
     print "- Brackets"
     article_words = article_words.sort_values(by=["art_id","sent_id","pos"] )
-    article_words.loc[:,"bracket"] = ["none"] * article_words.shape[0]
+    article_words.loc[:,"lbracket"] = ["none"] * article_words.shape[0]
+    article_words.loc[:,"rbracket"] = ["none"] * article_words.shape[0]
 
     begin_bracket = 0
     error = False
@@ -180,21 +183,21 @@ def getEntityArticle(id):
         #reset last_iob when initiating a new sentence
         # if last_sent != art_word.cs_id:
         #     last_iob = "none"
-        print "last sent %i" %last_sent
+        # print "last sent %i" %last_sent
         # process the word
         if art_word.iob_tag == "B-Loc":
-            print "-- Begin word"
-            print art_word.word
+            # print "-- Begin word"
+            # print art_word.word
             begin_bracket = index
         elif art_word.iob_tag == "none" and last_iob in ["I-Loc","B-Loc"]:
-            print "-- end bracket"
-            print art_word.word
+            # print "-- end bracket"
+            # print art_word.word
             if error:
-                article_words.loc[begin_bracket,"bracket"] = "begin-red"
-                article_words.loc[index,"bracket"] = "end-red"
+                article_words.loc[begin_bracket,"lbracket"] = "begin-red"
+                article_words.loc[last_index, "rbracket"] = "end-red"
             else:
-                article_words.loc[begin_bracket,"bracket"] = "begin-green"
-                article_words.loc[index,"bracket"] = "end-green"
+                article_words.loc[begin_bracket, "lbracket"] = "begin-green"
+                article_words.loc[last_index, "rbracket"] = "end-green"
             error = False
             begin_bracket = 0
         # see if there's an error
@@ -203,6 +206,7 @@ def getEntityArticle(id):
 
         #set last iob and last sentence id before iterating
         last_iob = art_word.iob_tag
+        last_index = index
         last_sent = art_word.cs_id
 
     
@@ -213,15 +217,22 @@ def getEntityArticle(id):
         sentence = []
         for index, word in article_words[article_words["sent_id"] == sent_id].iterrows():
             if len(sentence)==0 or sentence[-1][1] != word.conf:
-                sentence.append([word.word, word.conf, word.bracket, word.iob_tag, word.pred])
+                sentence.append([word.word, word.conf, word.lbracket, word.rbracket, word.iob_tag, word.pred])
             elif sentence[-1][1] == word.conf:
                 sentence[-1][0] += " " + word.word 
-                sentence[-1][3] += ", " + word.iob_tag 
-                sentence[-1][4] += ", " + word.pred 
+                sentence[-1][3] = word.rbracket
+                sentence[-1][4] += ", " + word.iob_tag 
+                sentence[-1][5] += ", " + word.pred 
         sentences.append(sentence)
             
     # return the values
-    return jsonify( sentences )
+    return jsonify({ 
+        "art_id": document.id,
+        "title": document.title,
+        "gold": categories.gold,
+        "pred": categories.pred,
+        "sentences": sentences 
+    })
 
 
     

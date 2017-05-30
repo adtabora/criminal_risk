@@ -7,10 +7,20 @@ import { Component, Input, Output,EventEmitter } from '@angular/core';
   template: `
       <md-tab-group (selectChange)="handleTabChange($event)">
         <md-tab label="Topic Explorer">
-          <left-topic [list]="topicList" [count]="topicCount" ></left-topic>
+          <left-topic 
+            [list]="topicList" 
+            [count]="topicCount" 
+            (setArticle)="selectArticle($event)"
+            (filterArticles)="changeFilters($event)" 
+          ></left-topic>
         </md-tab>
         <md-tab label="Entity Explorer">
-          <left-entity [list]="entityList" [count]="entityCount"></left-entity>
+          <left-entity 
+            [list]="entityList" 
+            [count]="entityCount"
+            (setArticle)="selectArticle($event)"
+            (filterArticles)="changeFilters($event)"
+            ></left-entity>
         </md-tab>
       </md-tab-group>
     `,
@@ -35,13 +45,6 @@ export class LeftPanelComponent {
   @Output() filterArticles = new EventEmitter<any>();
   @Output() selectTab = new EventEmitter<string>();
 
-  categories = ["all","None", "Criminal","Other","Criminal-Other" ];
-
-  categoryFilter: String
-  tagFilter = "all"
-  offset = 0
-  limit = 100
-
   // Event emitters when the tab is changed
 
   handleTabChange( tab: any):void{
@@ -53,50 +56,15 @@ export class LeftPanelComponent {
   }
 
 
-  selectArticle(article:any):void{
-    this.setArticle.emit(article.id)
+  selectArticle(art_id:number):void{
+    this.setArticle.emit(art_id)
   }
   
-  changeFilters():void{
-    var category = this.categoryFilter
-    
-    
-    this.filterArticles.emit({
-      category: category,
-      tag: this.tagFilter,
-      offset: this.offset,
-      limit: this.limit
-    })
+  changeFilters(filters: any):void{
+    this.filterArticles.emit(filters);
   }
 
-  subtract():void{
-    if (this.offset != 0){
-      this.offset -= 100
-    }
-    this.changeFilters()
-  }
 
-  add():void{
-    if (this.offset+100 < this.count ){
-      this.offset += 100
-      this.changeFilters()
-    }
-  }
-
-  setTagAll():void{
-    this.tagFilter = "all"
-    this.changeFilters()
-  }
-
-  setTagTagged():void{
-    this.tagFilter = "tagged"
-    this.changeFilters()
-  }
-
-  setTagUntagged():void{
-    this.tagFilter = "untagged"
-    this.changeFilters()
-  }
 
   
 }

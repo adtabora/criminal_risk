@@ -7,18 +7,17 @@ import { Component, Input, Output,EventEmitter } from '@angular/core';
   template: `
     <div class="filter-header" style="display:grid;">
       <div class="filter-check">
-      <md-checkbox>True Positives</md-checkbox>
-      <md-checkbox>False Positives</md-checkbox>
+      <md-checkbox [(ngModel)]="tp" (change)="changeFilters()" >True Positives</md-checkbox>
+      <md-checkbox [(ngModel)]="fp" (change)="changeFilters()" >False Positives</md-checkbox>
       </div>
       <div class="filter-check">
-      <md-checkbox>True Negatives</md-checkbox>
-      <md-checkbox>False Negatives</md-checkbox>
+      <md-checkbox [(ngModel)]="tn" (change)="changeFilters()" >True Negatives</md-checkbox>
+      <md-checkbox [(ngModel)]="fn" (change)="changeFilters()" >False Negatives</md-checkbox>
       </div>
     </div>
     <div class="filter-header">
-      <button md-button (click)="setTagAll()" >All</button>
-      <button md-button (click)="setTagTagged()">Train</button>
-      <button md-button (click)="setTagUntagged()">Test</button>
+      <button md-button (click)="setTrain()">Train</button>
+      <button md-button (click)="setTest()">Test</button>
     </div>
 
     <div class="filter-header" >
@@ -76,8 +75,13 @@ export class LeftTopicComponent {
   @Output() setArticle = new EventEmitter<Number>();
   @Output() filterArticles = new EventEmitter<any>();
 
-  categoryFilter: String
-  tagFilter = "all"
+  tp = true;
+  fp = false;
+  tn = false;
+  fn = false;
+  dataset = "train";
+
+  
   offset = 0
   limit = 100
 
@@ -86,14 +90,13 @@ export class LeftTopicComponent {
   }
   
   changeFilters():void{
-    var category = this.categoryFilter
-    
-    
+    var self = this;
     this.filterArticles.emit({
-      category: category,
-      tag: this.tagFilter,
-      offset: this.offset,
-      limit: this.limit
+        tp: self.tp,
+        fp: self.fp,
+        tn: self.tn,
+        fn: self.fn,
+        dataset: self.dataset
     })
   }
 
@@ -111,20 +114,16 @@ export class LeftTopicComponent {
     }
   }
 
-  setTagAll():void{
-    this.tagFilter = "all"
+  setTrain():void{
+    this.dataset = "train"
+    this.changeFilters()
+  }
+  setTest():void{
+    this.dataset = "test"
     this.changeFilters()
   }
 
-  setTagTagged():void{
-    this.tagFilter = "tagged"
-    this.changeFilters()
-  }
-
-  setTagUntagged():void{
-    this.tagFilter = "untagged"
-    this.changeFilters()
-  }
+ 
 
   
 }

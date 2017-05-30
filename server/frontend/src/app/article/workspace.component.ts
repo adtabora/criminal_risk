@@ -29,7 +29,13 @@ import { Component,Input } from '@angular/core';
     <div class="article-content">
       <p *ngFor="let sentence of sentences">
         <span *ngFor="let chunk of sentence" [class]="chunk[1]">
+          <span class="bracket-left-red" *ngIf="chunk[2]=='begin-red' ">[</span>
+          <span class="bracket-left-green" *ngIf="chunk[2]=='begin-green' ">[</span>
+        
           {{chunk[0]}}
+          <span class="bracket-right-red" *ngIf="chunk[3]=='end-red' ">]</span>
+          <span class="bracket-right-green" *ngIf="chunk[3]=='end-green' ">]</span>
+          
         </span> 
       </p>
     </div>
@@ -56,6 +62,43 @@ import { Component,Input } from '@angular/core';
       margin-right: 20px
     }
 
+    .TP {
+      background-color: #dff0d8;
+    }
+
+    .FP {
+      background-color: #f2dede;
+    }
+
+    .FN {
+      background-color: #fcf8e3;
+    }
+
+    .TN {
+      background-color: #ffffff;
+    }
+
+    .bracket-left-red {
+      font-size: xx-large;
+      color: red;
+      margin-right: 0px;
+    }
+    .bracket-right-red {
+      font-size: xx-large;
+      color: red;
+      margin-left: 0px;
+    }
+    .bracket-left-green {
+      font-size: xx-large;
+      color: green;
+      margin-right: 0px;
+    }
+    .bracket-right-green {
+      font-size: xx-large;
+      color: green;
+      margin-left: 0px;
+    }
+
     `]
 })
 
@@ -66,25 +109,8 @@ export class WorkspaceComponent {
   @Input() entityTab: boolean
   @Input() sentences : any[];
 
-  ngOnInit(): void{{
-    this.sentences.forEach(sentence => {
-      for (var i = 0; i < sentence.length; i++) {
-        switch (sentence[i][1]){
-          case "TP":
-            sentence[i][1] = "bg-success";
-            break;
-          case "FP":
-            sentence[i][1] = "bg-danger";
-            break;
-          case "TN":
-            sentence[i][1] = "";
-            break;
-          case "FN":
-            sentence[i][1] = "bg-warning";
-            break;    
-        }
-      }
-    });
+  ngOnInit(): void{
+    
   }
 
  

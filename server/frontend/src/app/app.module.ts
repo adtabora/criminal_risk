@@ -25,7 +25,7 @@ import { LeftTopicComponent }  from './article/left-topic.component';
 import { LeftEntityComponent }  from './article/left-entity.component';
 import { RightPanelComponent }  from './article/right.component';
 import { WorkspaceComponent }  from './article/workspace.component';
-import { WordComponent }  from './article/word.component';
+
 
 import { MapComponent }  from './map/map.component';
 import { ResultsComponent }  from './result/results.component';
@@ -64,7 +64,7 @@ const appRoutes: Routes = [
   ],
   declarations: [
     AppComponent,
-    ArticleEditorComponent,  RightPanelComponent, WorkspaceComponent, WordComponent, 
+    ArticleEditorComponent,  RightPanelComponent, WorkspaceComponent, 
     LeftPanelComponent, LeftTopicComponent,LeftEntityComponent,
     MapComponent, 
     ResultsComponent,ScoreComponent
