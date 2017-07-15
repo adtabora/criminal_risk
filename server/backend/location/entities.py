@@ -6,7 +6,7 @@ import numpy as np
 def extract_true_entities(words):
     data = []
     for index, row in words.iterrows():
-        if row.iob_tag == "B-Loc":
+        if row.iob_tag[0] == "B":
             data.append([
                 row.art_id,
                 row.sent_id,
@@ -14,7 +14,7 @@ def extract_true_entities(words):
                 row.pos,
                 row.word
             ])
-        elif row.iob_tag == "I-Loc":
+        elif row.iob_tag[0] == "I":
             if len(data) > 0:
                 data[-1][4] += " " + row.word
 
@@ -28,8 +28,9 @@ def extract_identified_entities(features, preds, le_iob):
     features.loc[:,"pred"] = preds
     
     data = []
+    last_iob = "none"
     for index, row in features.sort_values(by=["cs_id","pos"]).iterrows():
-        if row.pred == "B-Loc":
+        if row.pred[0] == "B":
             data.append([
                 row.art_id,
                 row.sent_id,
@@ -37,9 +38,23 @@ def extract_identified_entities(features, preds, le_iob):
                 row.pos,
                 row.word
             ])
-        elif row.pred == "I-Loc":
+        elif row.pred[0] == "I" and last_iob[0] in ["B", "I"]:
             if len(data) > 0:
                 data[-1][4] += " " + row.word
+
+        #this statement actually its taking an I-Loc as an B-Loc
+        elif row.pred[0] == "I" and last_iob == "none":
+            data.append([
+                row.art_id,
+                row.sent_id,
+                row.cs_id,
+                row.pos,
+                row.word
+            ])
+
+
+        last_iob = row.pred
+
 
     df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","pos","entity"])
 

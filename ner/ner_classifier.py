@@ -40,7 +40,7 @@ def tag_articles():
 
     #read iob labeler
     le_iob = pickle.load( open( "./files/iob_tag_encoder.p", "rb" ) )
-    
+    print le_iob.classes_
     # print le_iob.classes_
     words_df.loc[:,"iob"] = le_iob.inverse_transform(words_df.iob)
     words_df.to_json("./files/iob_words.json")

@@ -22,6 +22,7 @@ import { ArticlesService } from '../services/articles.service';
 
     <div class="workspace" >      
       <workspace *ngIf="article" 
+        [artId] = "article.art_id"
         [title] = "article.title"
         [sentences] = "article.sentences"
         [entityTab] = "entityTab"
@@ -54,7 +55,7 @@ export class ArticleEditorComponent {
         };
     entityList: any[];
     entityCount: number;
-    entityFilters = { dataset: "test"};
+    entityFilters = { dataset: "train"};
 
 
     filters: any;

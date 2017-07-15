@@ -16,6 +16,7 @@ import { Component, Input } from '@angular/core';
                     <th> Precision </th>
                     <th> Recall </th>
                     <th> f score </th>
+                    <th> support </th>
                 </tr>
             </thead>
             <tbody>
@@ -27,6 +28,7 @@ import { Component, Input } from '@angular/core';
                     <td> {{ (score.precision * 100.0).toFixed(2) }}% </td>
                     <td> {{ (score.recall * 100.0).toFixed(2) }}% </td>
                     <td> {{ (score.fscore * 100.0).toFixed(2) }}% </td>
+                    <td> {{ score.support }} </td>
                 </tr>
             <tbody>
         </table>

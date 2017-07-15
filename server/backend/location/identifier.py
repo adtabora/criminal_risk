@@ -1,14 +1,13 @@
 from classifiers import initialize_classifiers
-
-
+import numpy as np
 
 
 # formats in X and y
 def getXY(df, dropColumns):
     X = df.drop(dropColumns, 1).values
-    y = df.iob_tag.values
+    y = df.iob.values
     # print "-- iob counts --"
-    # print df.iob_tag.value_counts()
+    # print df.iob.value_counts()
     return X, y
 
 # add stacked features 
@@ -25,8 +24,8 @@ def add_stacked_feature(clf_ix, pos, df):
     # shift list
     df.loc[:,column ] = preds[pos:] + preds[:pos]
     # correct the values for the first words
-    if pos < 0:
-        df.at[df[column] < -pos,column] = 2
+    # if pos < 0:
+    #     df.at[df[column] < -pos,column] = 1
    
     return df
 
@@ -41,39 +40,46 @@ def get_stacked_features(df, lvl_1_classifiers):
     return df
 
 
-
-
-
 # TRAIN
-def train_identifier(features_train, features_test):
+def train_identifier(features_train, features_test, labels):
     print "- format into X and y"
-    desc_columns = ["art_id","sent_id", "cs_id","word", "iob_tag"]
+    desc_columns = ["art_id","sent_id", "cs_id","word", "iob_tag","iob" ,"geo_type"]
     X_train, y_train = getXY(features_train, desc_columns)
     X_test, y_test = getXY(features_test, desc_columns)
 
     #Initialize classifiers
-    lvl_1_classifiers, lv2_classifier = initialize_classifiers()
+    lvl_1_classifiers, lv2_classifier = initialize_classifiers(labels)
 
     print "- start processing classifiers"
+    stack_features_train = features_train.copy()  #[desc_columns]
+    stack_features_test = features_test.copy() #[desc_columns]
     lvl1_scores = []
     for index, clf in enumerate(lvl_1_classifiers):
         print "-- training classifier %i" %index
+        print np.bincount(y_train)
         clf.train(X_train, y_train, scores=True)
         print "-- predicting classifier %i" %index
         preds_train, preds_test, clf_score = clf.predict_score(X_train, y_train, X_test, y_test)
         lvl1_scores.append(clf_score)
 
-        features_train.loc[:,"pred_"+str(index)] = preds_train
-        features_test.loc[:,"pred_"+str(index)] = preds_test
+        stack_features_train.loc[:,"pred_"+str(index)] = preds_train
+        stack_features_test.loc[:,"pred_"+str(index)] = preds_test
 
     print "- producing stacked features"
-    features_train = get_stacked_features(features_train, lvl_1_classifiers)
-    features_test = get_stacked_features(features_test, lvl_1_classifiers)
+    stack_features_train = get_stacked_features(stack_features_train, lvl_1_classifiers)
+    stack_features_test = get_stacked_features(stack_features_test, lvl_1_classifiers)
+    
 
     print "- format into X and y"
-    X_train, y_train = getXY(features_train, desc_columns)
-    X_test, y_test = getXY(features_test, desc_columns)
+    print stack_features_train.loc[0:10]
+    X_train, y_train = getXY(stack_features_train, desc_columns)
+    X_test, y_test = getXY(stack_features_test, desc_columns)
     
+    print "--- DEBUG X_TRAIN ----"
+    print stack_features_train.columns
+    print desc_columns
+    print X_train
+    print y_train
 
     print "- training lvl2 classifier"
     lv2_classifier.train( X_train, y_train, scores=True)

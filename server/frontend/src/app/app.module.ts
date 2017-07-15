@@ -1,4 +1,4 @@
-import { NgModule }      from '@angular/core';
+import { NgModule, ApplicationRef, CUSTOM_ELEMENTS_SCHEMA }      from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule }   from '@angular/forms'; // <-- NgModel lives here
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
@@ -28,6 +28,8 @@ import { WorkspaceComponent }  from './article/workspace.component';
 
 
 import { MapComponent }  from './map/map.component';
+import { AgmCoreModule } from '@agm/core';
+
 import { ResultsComponent }  from './result/results.component';
 import { ScoreComponent }  from './result/score.component';
 
@@ -52,6 +54,9 @@ const appRoutes: Routes = [
     BrowserModule,
     FormsModule, // <-- import the FormsModule before binding with [(ngModel)]
     HttpModule,
+    AgmCoreModule.forRoot({
+      apiKey: 'AIzaSyDii8HwHTwPH5vHYile-uNOQexmeOoMS74'
+    }),
     //material
     MdButtonModule,MdButtonToggleModule,
     MdListModule,
@@ -70,6 +75,7 @@ const appRoutes: Routes = [
     ResultsComponent,ScoreComponent
   ],
   bootstrap: [ AppComponent ],
+  schemas:  [ CUSTOM_ELEMENTS_SCHEMA ]
   
 })
 export class AppModule { }

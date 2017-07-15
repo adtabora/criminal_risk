@@ -25,7 +25,7 @@ import { Component,Input } from '@angular/core';
     </md-card>
 
     <md-card style="margin:10px">
-      <h1> {{title}} </h1>
+      <h1> {{artId + " - " + title}} </h1>
     <div class="article-content">
       <p *ngFor="let sentence of sentences">
         <span *ngFor="let chunk of sentence" [class]="chunk[1]">
@@ -105,6 +105,7 @@ import { Component,Input } from '@angular/core';
 export class WorkspaceComponent {
   @Input() goldTopic : string
   @Input() predTopic : string
+  @Input() artId : number
   @Input() title : string
   @Input() entityTab: boolean
   @Input() sentences : any[];

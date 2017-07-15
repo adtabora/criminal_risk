@@ -58,13 +58,13 @@ import { ResultsService } from '../services/results.service';
       <div  class="col-sm-6">
         <score title="Train Scores" 
           [scores]="tokenScore.train"
-          [labels]="['B-Loc','I-Loc']"
+          [labels]="tokenScore.labels"
         ></score>
       </div>
       <div  class="col-sm-6">
         <score title="Test Scores" 
           [scores]="tokenScore.test"
-          [labels]="['B-Loc','I-Loc']"
+          [labels]="tokenScore.labels"
         ></score>
       </div>
     </div>
@@ -78,13 +78,13 @@ import { ResultsService } from '../services/results.service';
         <div  class="col-sm-6">
           <score title="Train Scores"
             [scores]="clf.train"
-            [labels]="['B-Loc','I-Loc']"
+            [labels]="clf.labels"
           ></score>
         </div>
         <div  class="col-sm-6">
           <score title="Test Scores"
             [scores]="clf.test"
-            [labels]="['B-Loc','I-Loc']"
+            [labels]="clf.labels"
           ></score>
         </div>
       </div>

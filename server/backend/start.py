@@ -38,7 +38,7 @@ def runIdentifier():
     #Making an import from the parent directory
     from location import main
     #execute the identifier
-    main.execute_identifier()
+    main.execute()
 
     with open('../../files/identifier_scores.json', 'r') as file:
         results = json.load(file)
@@ -140,6 +140,48 @@ def getTopicArticle(id):
         "sentences": [[[ document.content, "fn"]]]  
     })
 
+@app.route("/map/list")
+def listPoints():
+    # #This is just for testing...
+    # from map import geolocation
+    # geolocation.execute()
+
+    #read the csv with the geopoints
+    points_df = pd.read_csv("../../files/geopoints.csv")
+    #format the response
+    points = []
+    for _, row in points_df.iterrows():
+        points.append({
+            "art_id": row.art_id,
+            "entity": row.entity,
+            "lat": row.lat,
+            "long": row.long,
+        })
+    
+    return jsonify(points)
+
+@app.route("/map/geocode")
+def geocode_entities():
+    #This is just for testing...
+    from map import geolocation
+    geolocation.execute()
+
+    #read the csv with the geopoints
+    points_df = pd.read_csv("../../files/geopoints.csv")
+
+    #format the response
+    points = []
+    for _, row in points_df.iterrows():
+        points.append({
+            "art_id": row.art_id,
+            "entity": row.entity,
+            "lat": row.lat,
+            "long": row.long,
+        })
+    
+    
+    return jsonify(points)
+
 
 @app.route("/entity/get/<id>")
 def getEntityArticle(id):
@@ -152,19 +194,20 @@ def getEntityArticle(id):
     document = documents_df[documents_df["id"]==int(id)].iloc[0]
     article_words = classified_df[classified_df["art_id"]==int(id)]
 
+    article_words["iob_tag"] = article_words["iob_tag"].apply(lambda x: x[0] if x != "none" else "O")
 
     print "- Confucius analysis"
     #TP
-    conditions = (article_words["iob_tag"].isin(["B-Loc","I-Loc"])) & (article_words["pred"].isin(["B-Loc","I-Loc"]))
+    conditions = (article_words["iob_tag"].isin(["B","I"])) & (article_words["pred"].isin(["B","I"]))
     article_words.at[conditions,"conf"] = "TP"
     #FP
-    conditions = (article_words["iob_tag"].isin(["none"])) & (article_words["pred"].isin(["B-Loc","I-Loc"]))
+    conditions = (article_words["iob_tag"].isin(["O"])) & (article_words["pred"].isin(["B","I"]))
     article_words.at[conditions,"conf"] = "FP"
     #TN
-    conditions = (article_words["iob_tag"].isin(["none"])) & (article_words["pred"].isin(["none"]))
+    conditions = (article_words["iob_tag"].isin(["O"])) & (article_words["pred"].isin(["O"]))
     article_words.at[conditions,"conf"] = "TN"
     #FN
-    conditions = (article_words["iob_tag"].isin(["B-Loc","I-Loc"])) & (article_words["pred"].isin(["none"]))
+    conditions = (article_words["iob_tag"].isin(["B","I"])) & (article_words["pred"].isin(["O"]))
     article_words.at[conditions,"conf"] = "FN"
 
 
@@ -185,11 +228,11 @@ def getEntityArticle(id):
         #     last_iob = "none"
         # print "last sent %i" %last_sent
         # process the word
-        if art_word.iob_tag == "B-Loc":
+        if art_word.iob_tag[0] == "B":
             # print "-- Begin word"
             # print art_word.word
             begin_bracket = index
-        elif art_word.iob_tag == "none" and last_iob in ["I-Loc","B-Loc"]:
+        elif art_word.iob_tag == "O" and last_iob in ["I","B"]:
             # print "-- end bracket"
             # print art_word.word
             if error:
@@ -201,7 +244,7 @@ def getEntityArticle(id):
             error = False
             begin_bracket = 0
         # see if there's an error
-        if art_word.iob_tag in ["I-Loc","B-Loc"] and art_word.pred == "none":
+        if art_word.iob_tag in ["I","B"] and art_word.pred == "O":
             error = True
 
         #set last iob and last sentence id before iterating

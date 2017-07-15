@@ -30,14 +30,14 @@ import { Component, Input, Output,EventEmitter } from '@angular/core';
       </button>  
     </div>
 
-  <md-list dense *ngIf="list" style="height:60%;overflow-y:scroll" >
+  <md-nav-list  dense *ngIf="list" style="height:60%;overflow-y:scroll" >
     <h3 md-subheader>Search Result</h3>
-    <md-list-item *ngFor="let article of list"
+    <a md-list-item  *ngFor="let article of list"
       (click)="selectArticle(article)">
         <md-icon md-list-icon>folder</md-icon>
         <p md-line class="demo-2"> {{article.title}} </p>
-    </md-list-item>
-  </md-list>
+    </a>
+  </md-nav-list >
     
     `,
     styles:[`

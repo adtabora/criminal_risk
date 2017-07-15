@@ -8,9 +8,8 @@ import { Component, Input, Output,EventEmitter } from '@angular/core';
       <md-toolbar color="primary">
         <p>Showing only Criminal articles </p>
         <md-toolbar-row style="height:36px" >   
-          <button md-button (click)="setTagAll()" >All</button>
-          <button md-button (click)="setTagTagged()">Train</button>
-          <button md-button (click)="setTagUntagged()">Test</button>
+          <button md-button (click)="setTrain()">Train</button>
+          <button md-button (click)="setTest()">Test</button>
         </md-toolbar-row>
 
         <md-toolbar-row style="height:36px" >    
@@ -24,14 +23,14 @@ import { Component, Input, Output,EventEmitter } from '@angular/core';
         </md-toolbar-row>
       </md-toolbar>
 
-      <md-list dense *ngIf="list" style="height:60%;overflow-y:scroll" >
+      <md-nav-list dense *ngIf="list" style="height:60%;overflow-y:scroll" >
         <h3 md-subheader>Search Result</h3>
         <md-list-item *ngFor="let article of list"
           (click)="selectArticle(article)">
             <md-icon md-list-icon>folder</md-icon>
             <p md-line class="demo-2"> {{article.title}} </p>
         </md-list-item>
-      </md-list>
+      </md-nav-list >
     
   
     
@@ -54,23 +53,17 @@ export class LeftEntityComponent {
 
   categories = ["all","None", "Criminal","Other","Criminal-Other" ];
 
-  categoryFilter: String
-  tagFilter = "all"
-  offset = 0
-  limit = 100
+  datasetFilter = "train";
+  offset = 0;
+  limit = 100;
 
   selectArticle(article:any):void{
     this.setArticle.emit(article.id)
   }
   
-  changeFilters():void{
-    var category = this.categoryFilter
-    
+  changeFilters():void{    
     this.filterArticles.emit({
-      category: category,
-      tag: this.tagFilter,
-      offset: this.offset,
-      limit: this.limit
+      dataset: this.datasetFilter
     })
   }
 
@@ -88,20 +81,17 @@ export class LeftEntityComponent {
     }
   }
 
-  setTagAll():void{
-    this.tagFilter = "all"
+  setTrain():void{
+    this.datasetFilter = "train"
+    this.changeFilters()
+  }
+  setTest():void{
+    this.datasetFilter = "test"
     this.changeFilters()
   }
 
-  setTagTagged():void{
-    this.tagFilter = "tagged"
-    this.changeFilters()
-  }
 
-  setTagUntagged():void{
-    this.tagFilter = "untagged"
-    this.changeFilters()
-  }
+
 
   
 }

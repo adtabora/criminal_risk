@@ -6,32 +6,30 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
 
-def execute_identifier():
-    # read 
+def execute():
+    # 1. Read 
     articles_df = pd.read_csv("../../files/pos_articles.csv")
-    sentences_df = process.convertToSentences(articles_df)
 
-    # print sentences_df.head()
+    # 2. Split 
+    train_df, test_df = process.splitTrainTest(articles_df)
+    
+    # 3. Transform to Word format
+    words_train = process.convertToWords(train_df)
+    words_test = process.convertToWords(test_df)
 
-    sent_train, sent_test = process.splitTrainTest(sentences_df)
-
-    words_train = process.convertToWords(sent_train)
-    words_test = process.convertToWords(sent_test)
-
-    # print words_train.loc[30:80]
-
-
-    #train a label encoder for tags using the whole corpus
+    # 4. train a label encoder for POS tags using the whole corpus
     le_tag = LabelEncoder()
     le_tag.fit(words_train.pos_tag.values.tolist() + words_test.pos_tag.values.tolist())
-
+    # 5. Generate new features
     features_train, le_iob, _ = process.getFeatures(words_train.copy(), le_tag= le_tag)
     features_test, _,_ = process.getFeatures(words_test.copy(), le_iob, le_tag)
 
-    pred_train, pred_test, scores = identifier.train_identifier(features_train, features_test)
 
+    # 6. Train the identifier.
+    labels = le_iob.classes_
+    pred_train, pred_test, scores = identifier.train_identifier(features_train, features_test, labels)
 
-    # Score based on identified entities
+    # 7. Score based on identified entities
     true_ent_train = extract_true_entities(words_train)
     true_ent_test = extract_true_entities(words_test)
 
@@ -55,15 +53,14 @@ def execute_identifier():
         "test": test_score
     }
 
-    # Save scores
+    # 8. Save scores and results
     print "- Saving Scores"
     import json
     with open('../../files/identifier_scores.json', 'w') as file:
         json.dump(scores, file)
 
-    # Save results
+    
     print "- Saving Results"
-
     result_train = words_train
     # result_train.loc[:,"word"] =result_train.word.apply(lambda x: unicode(x,"utf8") )
     result_train.loc[:,"pred"] = le_iob.inverse_transform(pred_train)
@@ -76,5 +73,13 @@ def execute_identifier():
 
     results_df = pd.concat([result_train, result_test])
     results_df.to_csv("../../files/words_classified.csv",index=False, encoding="utf-8")
+
+
+    # Save entity results
+    print "- Saving Entity Results"
+    ident_ent_train.loc[:,"dataset"] = "train"
+    ident_ent_test.loc[:,"dataset"] = "test"
+    ident_ent = pd.concat([ident_ent_train, ident_ent_test])
+    ident_ent.to_csv("../../files/entities.csv",index=False, encoding="utf-8")
 
 

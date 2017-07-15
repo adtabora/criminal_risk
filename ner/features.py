@@ -20,6 +20,7 @@ def convert_df(sentences, iob=False):
         sent = sentences[sent_num]
         for pos in range(len(sent)):
             word = sent[pos]
+            
             s_id.append(sent_num)
             s_pos.append(pos)
             s_word.append(word[0])
@@ -88,8 +89,8 @@ def extract_ident_features(sentences, test_sentences=None):
         return train_df, test_df
 
     else:
-        words_df = convert_df(sentences)
-        features_df = get_ident_features(words_df)
+        words_df = convert_df(sentences, iob=True)
+        features_df = get_ident_features(words_df,iob=True)
         print "-Done."
         return features_df, words_df
 

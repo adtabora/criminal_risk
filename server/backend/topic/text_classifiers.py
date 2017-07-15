@@ -10,24 +10,18 @@ stop_words = pd.read_json("../../files/stopwords.json")[0].values.tolist()
 
 # A Multinomial Naive Bayes Classifier
 class NBClassifier():
-    alpha = None
-    title = None
-    content = None
-
-    accuracy = {"train": 0.0,"test":0.0 }
-    precision = {"train": 0.0,"test":0.0 }
-    recall = {"train": 0.0,"test":0.0 }
-    fscore = {"train": 0.0,"test":0.0 }
+    
 
 
     def __init__(self, alpha, title=None, content=None ):
         self.alpha = alpha
-        if title != None:
-            self.title = title    
-            # self.title.min = title.min if title.min else 1
-            # self.title.max = title.max if title.max else 1
-
+        self.title = title    
         self.content = content
+
+        self.accuracy = {"train": 0.0,"test":0.0 }
+        self.precision = {"train": 0.0,"test":0.0 }
+        self.recall = {"train": 0.0,"test":0.0 }
+        self.fscore = {"train": 0.0,"test":0.0 }
 
 
     def train_test(self, train, test):
@@ -132,7 +126,7 @@ class NBClassifier():
         self.recall["test"] = rec[1]
         self.fscore["test"] = f1[1]
 
-    def predict_log_proba(self, df):
+    def predict(self, df, mode=None):
         if self.title:
             X_title = self.title_vec.transform(df.title.values)
         if self.content:
@@ -144,16 +138,19 @@ class NBClassifier():
             X = X_title
         elif self.content:
             X = X_content
-            
-        return self.clf.predict_log_proba(X)
+        
+        if mode == "proba":
+            return self.clf.predict_proba(X)
+        elif mode == None:
+            return self.clf.predict(X)
+
 
 
     def vect_fit_transform(self, train_df, test_df, params, column, return_vec=False):
         vectorizer = CountVectorizer(
                 min_df= params["min"] ,        max_df= params["max"], 
-                ngram_range= params["ngram"],  binary= params["binary"],
-                #max_features=700,  
-                analyzer='char_wb', stop_words=stop_words, 
+                ngram_range= params["ngram"],  binary= params["binary"], 
+                analyzer=params["analyzer"], stop_words=stop_words, 
         )
 
         vectorizer.fit(train_df[train_df["category"]=="Criminal"][column].values)

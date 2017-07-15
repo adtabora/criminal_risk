@@ -46,6 +46,10 @@ import { Component } from '@angular/core';
       width: 100%;
     }
 
+    .sebm-google-map-container {
+      height: 300px;
+    }
+
   `]
 
 })
