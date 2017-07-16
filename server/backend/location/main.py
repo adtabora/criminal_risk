@@ -24,10 +24,17 @@ def execute():
     features_train, le_iob, _ = process.getFeatures(words_train.copy(), le_tag= le_tag)
     features_test, _,_ = process.getFeatures(words_test.copy(), le_iob, le_tag)
 
+    #5.5 save features for testing purposes
+    features_train.to_csv("../../files/ner_features_train.csv",index=False, encoding="utf-8")
+    features_test.to_csv("../../files/ner_features_test.csv",index=False, encoding="utf-8")
+
 
     # 6. Train the identifier.
     labels = le_iob.classes_
     pred_train, pred_test, scores = identifier.train_identifier(features_train, features_test, labels)
+    
+
+ 
 
     # 7. Score based on identified entities
     true_ent_train = extract_true_entities(words_train)

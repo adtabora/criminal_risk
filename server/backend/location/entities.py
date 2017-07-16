@@ -25,6 +25,13 @@ def extract_true_entities(words):
 
 def extract_identified_entities(features, preds, le_iob):
     preds = le_iob.inverse_transform(preds)
+    # 6.1 transform the preds
+    last = "O"
+    for idx, pred in enumerate(preds):
+        if last == "B" and pred[0] == "B":
+            preds[idx] = "I"
+        last = pred[0]
+
     features.loc[:,"pred"] = preds
     
     data = []

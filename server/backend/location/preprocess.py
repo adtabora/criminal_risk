@@ -28,7 +28,7 @@ def splitTrainTest(df):
 
     # Make a stratified split based on entity counts
     print "-- Stratified split"
-    skf = StratifiedKFold(n_splits=5,shuffle=True, random_state= 233 )
+    skf = StratifiedKFold(n_splits=5,shuffle=True, random_state= 773 )  #233
     for train_index, test_index in skf.split( df, df.entity_count.tolist()):
         train_df = df.loc[train_index]
         test_df = df.loc[test_index]

@@ -78,8 +78,8 @@ def initialize_classifiers(labels):
 
     # Classifier 0: Random Forest
     parameters = {
-        "n_estimators": [1000],
-        "max_depth": [10], #[3,4,5,8,10,20],
+        "n_estimators": [200],
+        "max_depth": [20], #[3,4,5,8,10,20],
         "min_samples_split" : [4]
     }
     rfc = RandomForestClassifier(random_state= 233, n_jobs=4)
@@ -107,10 +107,14 @@ def initialize_classifiers(labels):
     # rfc = RandomForestClassifier(random_state= 233, n_jobs=4)
 
     # from sklearn.linear_model import LogisticRegression
-    parameters = {"C":[10, 1.0, 0.1, 0.01]}
-    rfc = LogisticRegression(penalty="l1", random_state=238, n_jobs=4)
+    # parameters = {"C":[10, 1.0, 0.1, 0.01]}
+    # clf = LogisticRegression(penalty="l1", random_state=238, n_jobs=4)
+
+    from sklearn import tree
+    parameters = {}
+    clf = tree.DecisionTreeClassifier()
 
 
-    lvl2 = Classifier(rfc, parameters, labels)
+    lvl2 = Classifier(clf, parameters, labels)
 
     return lvl_1_classifiers, lvl2
