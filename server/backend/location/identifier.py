@@ -46,6 +46,7 @@ def train_identifier(features_train, features_test, labels):
     desc_columns = ["art_id","sent_id", "cs_id","word", "iob_tag","iob" ,"geo_type"]
     X_train, y_train = getXY(features_train, desc_columns)
     X_test, y_test = getXY(features_test, desc_columns)
+    print "- number of features: %i" %len(X_train[0])
 
     #Initialize classifiers
     lvl_1_classifiers, lv2_classifier = initialize_classifiers(labels)
@@ -56,7 +57,7 @@ def train_identifier(features_train, features_test, labels):
     lvl1_scores = []
     for index, clf in enumerate(lvl_1_classifiers):
         print "-- training classifier %i" %index
-        print np.bincount(y_train)
+        # print np.bincount(y_train)
         clf.train(X_train, y_train, scores=True)
         print "-- predicting classifier %i" %index
         preds_train, preds_test, clf_score = clf.predict_score(X_train, y_train, X_test, y_test)
@@ -66,20 +67,23 @@ def train_identifier(features_train, features_test, labels):
         stack_features_test.loc[:,"pred_"+str(index)] = preds_test
 
     print "- producing stacked features"
-    stack_features_train = get_stacked_features(stack_features_train, lvl_1_classifiers)
-    stack_features_test = get_stacked_features(stack_features_test, lvl_1_classifiers)
+    #stacked prev features don't apply in this scenario
+    #stack_features_train = get_stacked_features(stack_features_train, lvl_1_classifiers)
+    #stack_features_test = get_stacked_features(stack_features_test, lvl_1_classifiers)
     
 
     print "- format into X and y"
-    print stack_features_train.loc[0:10]
+    # print stack_features_train.loc[0:10]
     X_train, y_train = getXY(stack_features_train, desc_columns)
     X_test, y_test = getXY(stack_features_test, desc_columns)
+
+    print "- number of features: %i" %len(X_train[0])
     
     print "--- DEBUG X_TRAIN ----"
-    print stack_features_train.columns
-    print desc_columns
-    print X_train
-    print y_train
+    # print stack_features_train.columns
+    # print desc_columns
+    # print X_train
+    # print y_train
 
     print "- training lvl2 classifier"
     lv2_classifier.train( X_train, y_train, scores=True)

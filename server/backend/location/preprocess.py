@@ -6,46 +6,47 @@ import unicodedata
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import StratifiedKFold
 
-# split sentences using the distribution of entities 
-def splitTrainTest(df):
-    print "- Split Train Test"
 
-    #convert from string to python object
-    df.tagged_content = df.tagged_content.apply(lambda x: ast.literal_eval(x))
-    # Count the entities
-    print "-- Count entities per Article"
-    def getEntityCount(sentence):
-        return sum([ 1 for word in sentence if word[2][0] == "B"  ])
+def wordsToEntities(df):
+    print "- Words to Entities"
+    data = []
+    for idx, row in df.iterrows():
+        if row.iob_tag[0] in ["B","n"]:
+            data.append([row])
+        else:
+            data[-1].append(row)
+    
+    entity_df = pd.DataFrame({ 
+        "entity":data
+    })
 
-    counts = []
-    for _, article in df.iterrows():
-        article_count = 0
-        sentences = article.tagged_content
-        for sent in sentences:
-            article_count += getEntityCount(sent)
-        counts.append(article_count)
-    df.loc[:,"entity_count"] = counts 
+    entity_df.loc[:,"cat"] = entity_df.entity.apply(lambda x: x[0].geo_type + "_" + str(len(x)))
+    entity_df.loc[:,"category"] = entity_df.entity.apply(lambda x: x[0].geo_type)
+    entity_df.loc[:,"size"] = entity_df.entity.apply(lambda x: len(x))
 
-    # Make a stratified split based on entity counts
-    print "-- Stratified split"
-    skf = StratifiedKFold(n_splits=5,shuffle=True, random_state= 773 )  #233
-    for train_index, test_index in skf.split( df, df.entity_count.tolist()):
-        train_df = df.loc[train_index]
-        test_df = df.loc[test_index]
-        break #we only need one iteration since it is a simple split
+    low_cats = entity_df.cat.value_counts()[ entity_df.cat.value_counts() < 8 ].index.values
+    safety = 10
+    while low_cats.shape[0] > 0 and safety > 0:
+        for cat in low_cats:
+            entity_df.at[entity_df["cat"]==cat,"cat"] = cat[:-1] + str( int(cat[-1]) - 1 )
+        low_cats = entity_df.cat.value_counts()[ entity_df.cat.value_counts() < 8 ].index.values
+        safety -= 1
+    
+    return entity_df
+    
 
-    print "entities per article (Original): %0.4f" % (sum(counts) * 1.0  / len(counts) )
-    print "entities per article (Train): %0.4f" % (train_df.entity_count.sum()  * 1.0 / train_df.shape[0] )
-    print "entities per article (Test): %0.4f" % (test_df.entity_count.sum()  * 1.0 / test_df.shape[0] )
-
-    print "number of articles(Original): %i" % df.shape[0]
-    print "number of articles(Train): %i" % train_df.shape[0]
-    print "number of articles(Test): %i" % test_df.shape[0]
-
-    return train_df, test_df
-
+def entitiesToWords(df, columns):
+    print "- Entities to Words"
+    data = []
+    for _, row in df.iterrows():
+        for entity in row.entity:
+            data.append(entity)
+            
+    df = pd.DataFrame(data, columns=columns)
+    return df
 # convert the sentences to word tokens
 def convertToWords(articles):
+    articles.tagged_content = articles.tagged_content.apply(lambda x: ast.literal_eval(x))
     print "- Convert to Word tokens"
     data = []
     cs_id = -1  #corpus sentence id
@@ -67,11 +68,34 @@ def convertToWords(articles):
     
     #clean the iob
     df.loc[:,"iob_tag"] = df.iob_tag.apply(lambda x: x if x not in ["B-Misc", "I-Misc"] else "none" )
+    df.loc[:,"iob_tag"] = df.iob_tag.apply(lambda x: x if x not in ["B-Res", "I-Res"] else x[:2]+"Zone" )
     # separate the geo-entity classification from the IOB tag
     df.loc[:, "iob"] = df.iob_tag.apply(lambda x: "B" if x != "none"  else "O" )
     df.loc[:, "geo_type"] = df.iob_tag.apply(lambda x: x[2:] if x != "none"  else x )
     
     return df
+
+# split sentences using the distribution of entities 
+def splitTrainTest(df):
+    print "- Split Train Test"
+
+    # Make a stratified split based on entity counts
+    print "-- Stratified split"
+    skf = StratifiedKFold(n_splits=5,shuffle=True, random_state= 773 )  #233
+    for train_index, test_index in skf.split( df, df.cat.tolist()):
+        train_df = df.loc[train_index]
+        test_df = df.loc[test_index]
+        break #we only need one iteration since it is a simple split
+
+    print "--  Distribution"
+    dist_df = pd.DataFrame({})
+    dist_df["original"] = df.cat.value_counts() / df.shape[0]
+    dist_df["train"] = train_df.cat.value_counts() / train_df.shape[0]
+    dist_df["test"] = test_df.cat.value_counts() / test_df.shape[0]
+    print dist_df
+    return train_df, test_df
+
+
 
 
 # very useful function to avoid mispellings problems.
@@ -97,6 +121,16 @@ def entity_in_gazette(words,gazette):
     else:
         return 0
 
+
+def hot_encode(df,columns):
+    for column in columns:
+        dummies = pd.get_dummies(df[column], prefix=column)
+        df = pd.concat([df, dummies], axis=1)
+
+        df = df.drop(column, axis=1)
+    return df
+
+
 def getFeatures(df, le_iob=None, le_tag=None):
     print "- getting features"
     # iob
@@ -116,6 +150,9 @@ def getFeatures(df, le_iob=None, le_tag=None):
     # print le_tag.classes_
     # If word first letter is uppercase
     df.loc[:,"upper"] = df.word.apply(lambda x: int(x[0].isupper()) )
+    upper = df.upper.values.tolist()
+    df.loc[:,"upper_prev1"] = [0] + upper[:-1]
+    df.loc[:,"upper_next1"] =  upper[1:] + [0]
     # first word in sentence
     df.loc[:,"first"] = df.pos.apply(lambda x: int(x == 0) )
     # size
@@ -149,11 +186,16 @@ def getFeatures(df, le_iob=None, le_tag=None):
     countries_df = pd.read_csv("../../files/countries.csv", encoding="utf-8")
     dep_mun_df = pd.read_csv("../../files/DepartamentosMunicipios.csv", encoding="utf-8")
     world_cities = pd.read_csv("../../files/ciudades_mundo.csv", encoding="utf-8")
+    
+
+
     #converting to ascii because of accents (tilde)
     countries_df.value = countries_df.value.apply(lambda x: to_ascii(x).lower() )
     dep_mun_df.Departamento = dep_mun_df.Departamento.apply(lambda x: to_ascii(x).lower() )
     dep_mun_df.Municipio = dep_mun_df.Municipio.apply(lambda x: to_ascii(x).lower() )
     world_cities.city = world_cities.city.apply(lambda x: to_ascii(x).lower() )
+    #dropping city "Colonia" from Germany because it's causing problems
+    world_cities = world_cities[world_cities["city"]!="colonia"]
 
     country = []
     state = []
@@ -165,6 +207,19 @@ def getFeatures(df, le_iob=None, le_tag=None):
     next_1 = words[1:] + [""]
     next_2 = words[2:] + ["",""]
 
+    #convert to dummies
+    # columns = ["prev_1", "prev_2","next_1","next_2","pos_tag"]
+    # df = hot_encode(df,columns)
+
+    
+    
+    #Sentence Size
+    sentence_size = pd.DataFrame({
+        "cs_id":df.cs_id.value_counts().index.values,
+        "sent_size": df.cs_id.value_counts().values
+    })
+    
+    df = df.merge(sentence_size, left_on='cs_id', right_on='cs_id', how='left')
 
     cities_gazette = np.concatenate([dep_mun_df.Municipio.values, world_cities.city.values])
 

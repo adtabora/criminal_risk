@@ -9,36 +9,41 @@ from sklearn.preprocessing import LabelEncoder
 def execute():
     # 1. Read 
     articles_df = pd.read_csv("../../files/pos_articles.csv")
-
-    # 2. Split 
-    train_df, test_df = process.splitTrainTest(articles_df)
     
-    # 3. Transform to Word format
-    words_train = process.convertToWords(train_df)
-    words_test = process.convertToWords(test_df)
+    # 2.
+    words_df = process.convertToWords(articles_df)
 
-    # 4. train a label encoder for POS tags using the whole corpus
+    # 3. train a label encoder for POS tags using the whole corpus
     le_tag = LabelEncoder()
-    le_tag.fit(words_train.pos_tag.values.tolist() + words_test.pos_tag.values.tolist())
-    # 5. Generate new features
-    features_train, le_iob, _ = process.getFeatures(words_train.copy(), le_tag= le_tag)
-    features_test, _,_ = process.getFeatures(words_test.copy(), le_iob, le_tag)
+    le_tag.fit(words_df.pos_tag.values.tolist() )
+    # 4. Generate new features
+    features_df, le_iob, _ = process.getFeatures(words_df.copy(), le_tag= le_tag)
+    # 5. Convert to Entities
+    entities_df = process.wordsToEntities(features_df)
+    # 6. Split 
+    entities_train, entities_test = process.splitTrainTest(entities_df)
+    
+    # 7. Transform to Word format
+    features_train = process.entitiesToWords(entities_train,columns=features_df.columns)
+    features_test = process.entitiesToWords(entities_test,columns=features_df.columns)
 
-    #5.5 save features for testing purposes
+    
+
+    #7.5 save features for testing purposes
     features_train.to_csv("../../files/ner_features_train.csv",index=False, encoding="utf-8")
     features_test.to_csv("../../files/ner_features_test.csv",index=False, encoding="utf-8")
 
 
-    # 6. Train the identifier.
+    # 8. Train the identifier.
     labels = le_iob.classes_
     pred_train, pred_test, scores = identifier.train_identifier(features_train, features_test, labels)
     
 
  
 
-    # 7. Score based on identified entities
-    true_ent_train = extract_true_entities(words_train)
-    true_ent_test = extract_true_entities(words_test)
+    # 9. Score based on identified entities
+    true_ent_train = extract_true_entities(features_train)
+    true_ent_test = extract_true_entities(features_test)
 
     # print "true ent train shape %i" %true_ent_train.shape[0]
     # print "true ent test shape %i" %true_ent_test.shape[0]
@@ -60,7 +65,7 @@ def execute():
         "test": test_score
     }
 
-    # 8. Save scores and results
+    # 10. Save scores and results
     print "- Saving Scores"
     import json
     with open('../../files/identifier_scores.json', 'w') as file:
@@ -68,12 +73,12 @@ def execute():
 
     
     print "- Saving Results"
-    result_train = words_train
+    result_train = features_train
     # result_train.loc[:,"word"] =result_train.word.apply(lambda x: unicode(x,"utf8") )
     result_train.loc[:,"pred"] = le_iob.inverse_transform(pred_train)
     result_train.loc[:,"dataset"] = "train"
 
-    result_test = words_test
+    result_test = features_test
     # result_test.loc[:,"word"] =result_test.word.apply(lambda x: unicode(x,"utf8") )
     result_test.loc[:,"pred"] = le_iob.inverse_transform(pred_test)
     result_test.loc[:,"dataset"] = "test"
