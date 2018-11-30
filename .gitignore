@@ -6,3 +6,4 @@ Ideas.rtf
 trashbin/**
 /server/frontend/node_modules/**
 /server/frontend/prd/**
+/models/**
