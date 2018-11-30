@@ -1,1 +1,9 @@
 *.pyc
+/files/**
+/database/**
+.ipynb_checkpoints/**
+Ideas.rtf
+trashbin/**
+/server/frontend/node_modules/**
+/server/frontend/prd/**
+/models/**
