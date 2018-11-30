@@ -3,101 +3,78 @@ import pandas as pd
 import numpy as np
 
 
-def extract_true_entities(words):
+def extract_entities(words, io_column, geo_column):
     data = []
+    last_artid = -1
+    last_io = 1
     for index, row in words.iterrows():
-        if row.iob_tag[0] == "B":
+        # if row[column][0] == "B":
+        if (row[io_column]==0 and last_io == 1) or (row.art_id != last_artid and row[io_column]==0):
             data.append([
                 row.art_id,
                 row.sent_id,
                 row.cs_id,
                 row.pos,
-                row.word
+                row.word,
+                #correction of leaking
+                #row.geo_type   
+                row[geo_column]  #[2:]  
             ])
-        elif row.iob_tag[0] == "I":
+        # elif row[column][0] == "I":
+        elif row[io_column]==0 and last_io == 0:
             if len(data) > 0:
                 data[-1][4] += " " + row.word
+        last_artid = row.art_id
+        last_io = row[io_column]
 
-    df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","pos","entity"])
+    df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","pos","entity","geo_type"])
 
     return df
 
 
-def extract_identified_entities(features, preds, le_iob):
-    preds = le_iob.inverse_transform(preds)
-    # 6.1 transform the preds
-    last = "O"
-    for idx, pred in enumerate(preds):
-        if last == "B" and pred[0] == "B":
-            preds[idx] = "I"
-        last = pred[0]
+def score_entities(true, pred ):
+    geo_types =["Country","State","City","Zone","Col","Bar"]
 
-    features.loc[:,"pred"] = preds
-    
     data = []
-    last_iob = "none"
-    for index, row in features.sort_values(by=["cs_id","pos"]).iterrows():
-        if row.pred[0] == "B":
-            data.append([
-                row.art_id,
-                row.sent_id,
-                row.cs_id,
-                row.pos,
-                row.word
-            ])
-        elif row.pred[0] == "I" and last_iob[0] in ["B", "I"]:
-            if len(data) > 0:
-                data[-1][4] += " " + row.word
+    for geo_type in geo_types:
+        # Find the true positives
+        true_positive = 0
+        for index, entity in pred[pred["geo_type"]==geo_type].iterrows():
+            result = true[ (true["geo_type"] == geo_type)
+                          & (true["cs_id"] == entity.cs_id)
+                          & (true["pos"] == entity.pos)
+                          & (true["entity"] == entity.entity)
+                         ]
+            if len(result) > 0:
+                true_positive += 1
 
-        #this statement actually its taking an I-Loc as an B-Loc
-        elif row.pred[0] == "I" and last_iob == "none":
-            data.append([
-                row.art_id,
-                row.sent_id,
-                row.cs_id,
-                row.pos,
-                row.word
-            ])
+        support = true[true["geo_type"]==geo_type].shape[0]
+        if true_positive == 0:
+            precision =0.0
+            recall = 0.0
+            fscore = 0.0
+        else:
+            total_pos = pred[pred["geo_type"]==geo_type].shape[0]
+            if total_pos == 0:
+                precision = 0
+            else:
+                precision = true_positive * 1.0 / total_pos
+            recall = true_positive * 1.0 / support
+            fscore = (precision * recall)*2.0 / (precision + recall)
+        data.append([geo_type,precision,recall,fscore,support ])
 
+    scores_df = pd.DataFrame(data,columns=["geo_type","precision","recall","fscore","support"])
 
-        last_iob = row.pred
-
-
-    df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","pos","entity"])
-
-    return df
-
-
-def score_entities(true, pred):
-
-    # Find the true positives
-    true_positive = 0
-    for index, entity in pred.iterrows():
-        result = true[(true["cs_id"] == entity.cs_id)
-                      & (true["pos"] == entity.pos)
-                      & (true["entity"] == entity.entity)
-                     ]
-        if len(result) > 0:
-            true_positive += 1
-
-
-    print "true positives: %i" %true_positive
-    print "predicted positives: %i" % pred.shape[0]
-    print "real positives: %i" % true.shape[0]
+    support = scores_df["support"].sum() 
+    if support == 0:
+        f1_result = 0
+        precision = 0
+        recall = 0
+    else:
+        f1_result = (scores_df["fscore"] * scores_df["support"]).sum() / support
+        precision = (scores_df["precision"] * scores_df["support"]).sum() / support
+        recall = (scores_df["recall"] * scores_df["support"]).sum() / support
     
-    precision = true_positive * 1.0 / pred.shape[0]
-    print "precision: %0.4f" %precision
-    recall = true_positive * 1.0 / true.shape[0]
-    print "recall: %0.4f" %recall
+    scores_df = scores_df.append( pd.DataFrame([["Total",precision, recall, f1_result,support ]], columns=["geo_type","precision","recall","fscore","support"]) )
 
-    fscore = (precision + recall) / 2.0
-    print "fscores: %0.4f" %fscore
-
-    return {
-        "precision": precision,
-        "recall": recall,
-        "fscore": fscore
-    }
-
-    
-    
+    return scores_df

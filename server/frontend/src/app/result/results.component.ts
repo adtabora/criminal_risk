@@ -41,13 +41,36 @@ import { ResultsService } from '../services/results.service';
       <div  class="col-sm-6">
         <score title="Train Scores" 
               [scores]="entityScore.train" 
-              [labels]="['Location Entity']"
+              [labels]="entityScore.labels"
         ></score>
       </div>
       <div  class="col-sm-6">
         <score title="Test Scores" 
           [scores]="entityScore.test"
-          [labels]="['Location Entity']"
+          [labels]="entityScore.labels"
+        ></score>
+      </div>
+    </div>
+
+
+    <h3> Relationship Extraction <small>by category</small>
+      <button md-button md-raised-button (click)="runRelationships()" color="primary">
+        Run Relationships
+      </button>
+    </h3>
+    
+    <hr style="margin-top:0px">
+    <div class="row" >
+      <div  class="col-sm-6">
+        <score title="Train Scores" 
+              [scores]="relationshipsScore.train" 
+              [labels]="relationshipsScore.labels"
+        ></score>
+      </div>
+      <div  class="col-sm-6">
+        <score title="Test Scores" 
+          [scores]="relationshipsScore.test"
+          [labels]="relationshipsScore.labels"
         ></score>
       </div>
     </div>
@@ -131,11 +154,14 @@ export class ResultsComponent {
         fscore: 88.4
     }]
 
-    entityScore = { train:<any>null, test: <any>null}
+    entityScore = { train:<any>null, test: <any>null, labels:<any>null}
     tokenScore = { train:<any>null, test: <any>null}
     topicScore = { train:<any>null, test: <any>null}
+    relationshipsScore = { train:<any>null, test: <any>null}
 
     lvl1_scores = <any>[]
+
+    
 
     waiting = false
 
@@ -146,9 +172,12 @@ export class ResultsComponent {
   getResults(): void{
     var self = this
     this.resultsService.getIdentifierResults().then(function(response){
+        console.log("-- RESPONSE --");
+        console.log(response);
         //formating for component input
-        self.entityScore.train = [response.entity_score.train];
-        self.entityScore.test = [response.entity_score.test];
+        self.entityScore.labels = response.entity_score.labels;
+        self.entityScore.train = response.entity_score.train;
+        self.entityScore.test = response.entity_score.test;
 
         //token score
         self.tokenScore = response.lvl2;
@@ -159,6 +188,10 @@ export class ResultsComponent {
 
     this.resultsService.getTopicResults().then(function(response){
         self.topicScore = response.lvl2
+    });
+
+    this.resultsService.getRelationshipsResults().then(function(response){
+        self.relationshipsScore = response
     });
   }
 
@@ -187,6 +220,15 @@ export class ResultsComponent {
     this.resultsService.runTopic().then(function(response){
       self.waiting = false
       self.topicScore = response.lvl2
+    });
+  }
+
+  runRelationships(): void{
+    var self = this
+    this.waiting = true
+    this.resultsService.runRelationships().then(function(response){
+      self.waiting = false
+      self.relationshipsScore = response
     });
   }
 

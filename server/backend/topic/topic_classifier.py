@@ -5,6 +5,8 @@ from sklearn.model_selection import StratifiedKFold
 from text_classifiers import NBClassifier
 from sklearn.metrics import precision_recall_fscore_support
 
+import pickle
+
 
 
 # Combines the predictions of many classifiers in preparation for stacking 
@@ -43,6 +45,9 @@ def execute():
     print "- reading documents csv"
     documents_df = pd.read_csv("../../files/documents.csv")
 
+    #only use the train documents:
+    documents_df = documents_df.ix[:1999]
+
     #2. Preprocess data (eliminate nulls, eliminate ambiguous)
     print "- preprocess data"
     documents_df = documents_df[(documents_df.content.notnull() ) 
@@ -61,10 +66,25 @@ def execute():
         # Only Content Classifier
         NBClassifier(
             alpha=[0.5], #[1.0, 0.5, 0.1, 0.01, 0.001], 
-            content = { 
-                "vectorizer":"count", "ngram":[5,5], "analyzer":'char_wb',
-                "min":1, "max":0.3, "binary":True
-            }
+            # content = { 
+            #     "vectorizer":"count", "ngram":[5,5], "analyzer":'char_wb',
+            #     "min":1, "max":0.3, "binary":True
+            # }
+            title = { 
+                "vectorizer":"count", "ngram":[1,1], "analyzer":'word',
+                "min":1, "max":.05, "binary":False
+            }, 
+        ),
+         NBClassifier(
+            alpha=[1.0, 0.5, 0.1, 0.01, 0.001], 
+            # content = { 
+            #     "vectorizer":"count", "ngram":[5,5], "analyzer":'char_wb',
+            #     "min":1, "max":0.3, "binary":True
+            # }
+            title = { 
+                "vectorizer":"count", "ngram":[4,5], "analyzer":'char_wb',
+                "min":1, "max":0.3, "binary":False
+            }, 
         ),
         # Title and Content Classifier
         NBClassifier(
@@ -217,8 +237,12 @@ def execute():
         test_precision, test_recall, test_fscore, test_support, preds_test = print_scores(max_clf, test_df, test_labels)
 
 
-  
+    # save model
+    print 
+    print "- Saving model for production."
+    pickle.dump( max_clf, open( "../../models/topic_model.p", "wb" ) )
 
+    # Save scores
     scores = {
         "lvl2" : {
             "train": [{
@@ -228,15 +252,14 @@ def execute():
                 "support": train_support[1],
             }],
             "test": [{
-                "precision": precision[1],
-                "recall": recall[1],
-                "fscore": fscore[1],
-                "support": support[1],
+                "precision": test_precision[1],
+                "recall": test_recall[1],
+                "fscore": test_fscore[1],
+                "support": test_support[1],
             }]
         }
     }
 
-    # Save scores
     print "- Saving Scores"
     import json
     with open('../../files/topic_scores.json', 'w') as file:

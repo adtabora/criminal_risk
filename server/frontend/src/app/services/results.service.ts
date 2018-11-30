@@ -16,6 +16,9 @@ export class ResultsService {
    topicResultsUrl = "http://127.0.0.1:5000/topic/results"
    runTopicUrl = "http://127.0.0.1:5000/topic/run"
 
+   relationshipsResultsUrl = "http://127.0.0.1:5000/relationships/results"
+   relationshipsTopicUrl = "http://127.0.0.1:5000/relationships/run"
+
 
     getIdentifierResults(): Promise<any>{
         return this.http.get(this.identifierResultsUrl)
@@ -46,6 +49,24 @@ export class ResultsService {
 
     runTopic(): Promise<any>{
         return this.http.get(this.runTopicUrl)
+               .toPromise()
+               .then(function(response){
+                    return response.json();
+               })
+               .catch(this.handleError);
+    }
+
+    getRelationshipsResults(): Promise<any>{
+        return this.http.get(this.relationshipsResultsUrl)
+               .toPromise()
+               .then(function(response){
+                    return response.json();
+               })
+               .catch(this.handleError);
+    }
+
+    runRelationships(): Promise<any>{
+        return this.http.get(this.relationshipsTopicUrl)
                .toPromise()
                .then(function(response){
                     return response.json();

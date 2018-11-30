@@ -29,7 +29,7 @@ def test():
 
 @app.route('/identifier/results')
 def getIdentifierResults():
-    with open('../../files/identifier_scores.json', 'r') as file:
+    with open('./files/identifier_scores.json', 'r') as file:
         results = json.load(file)
     return jsonify(results)
 
@@ -40,14 +40,14 @@ def runIdentifier():
     #execute the identifier
     main.execute()
 
-    with open('../../files/identifier_scores.json', 'r') as file:
+    with open('./files/identifier_scores.json', 'r') as file:
         results = json.load(file)
         
     return jsonify(results)
 
 @app.route('/topic/results')
 def getTopicResults():
-    with open('../../files/topic_scores.json', 'r') as file:
+    with open('./files/topic_scores.json', 'r') as file:
         results = json.load(file)
     return jsonify(results)
 
@@ -59,9 +59,27 @@ def runTopic():
     #execute the identifier
     topic_classifier.execute()
 
-    with open('../../files/topic_scores.json', 'r') as file:
+    with open('./files/topic_scores.json', 'r') as file:
         results = json.load(file)
         
+    return jsonify(results)
+
+@app.route('/relationships/run')
+def runRelationships():
+    #Making an import from the parent directory
+    from relationships import main
+    #execute the identifier
+    main.execute()
+
+    with open('./files/relationships_scores.json', 'r') as file:
+        results = json.load(file)
+        
+    return jsonify(results)
+
+@app.route('/relationships/results')
+def getRealtionships():
+    with open('./files/relationships_scores.json', 'r') as file:
+        results = json.load(file)
     return jsonify(results)
 
 # ----------- Article Explorer ----------- #
@@ -76,7 +94,7 @@ def listTopicArticles():
     filter_fn = request.args["fn"]
 
     #read the csv
-    classified_df = pd.read_csv("../../files/documents_classified.csv")
+    classified_df = pd.read_csv("./files/documents_classified.csv")
     #filter by dataset
     classified_df = classified_df[classified_df["data_set"] == filter_dataset ]
     
@@ -110,7 +128,7 @@ def listTopicArticles():
 def listEntityArticles():
     filter_dataset = request.args["dataset"]
     #read the csv
-    classified_df = pd.read_csv("../../files/words_classified.csv")
+    classified_df = pd.read_csv("./files/words_classified.csv")
     #filter by dataset
     classified_df = classified_df[classified_df["dataset"] == filter_dataset ]
 
@@ -125,8 +143,8 @@ def listEntityArticles():
 @app.route("/topic/get/<id>")
 def getTopicArticle(id):
     #read the csv
-    classified_df = pd.read_csv("../../files/documents_classified.csv")
-    documents_df = pd.read_csv("../../files/documents.csv")
+    classified_df = pd.read_csv("./files/documents_classified.csv")
+    documents_df = pd.read_csv("./files/documents.csv")
 
     document = documents_df[documents_df["id"]==int(id)].iloc[0]
     categories = classified_df[classified_df["art_id"]==int(id)][["gold","pred"]].iloc[0]
@@ -147,7 +165,7 @@ def listPoints():
     # geolocation.execute()
 
     #read the csv with the geopoints
-    points_df = pd.read_csv("../../files/geopoints.csv")
+    points_df = pd.read_csv("./files/geopoints.csv")
     #format the response
     points = []
     for _, row in points_df.iterrows():
@@ -167,7 +185,7 @@ def geocode_entities():
     geolocation.execute()
 
     #read the csv with the geopoints
-    points_df = pd.read_csv("../../files/geopoints.csv")
+    points_df = pd.read_csv("./files/geopoints.csv")
 
     #format the response
     points = []
@@ -186,9 +204,9 @@ def geocode_entities():
 @app.route("/entity/get/<id>")
 def getEntityArticle(id):
     #read the csv
-    classified_df = pd.read_csv("../../files/words_classified.csv")
-    documents_df = pd.read_csv("../../files/documents.csv")
-    classified_docs_df = pd.read_csv("../../files/documents_classified.csv")
+    classified_df = pd.read_csv("./files/words_classified.csv")
+    documents_df = pd.read_csv("./files/documents.csv")
+    classified_docs_df = pd.read_csv("./files/documents_classified.csv")
 
     categories = classified_docs_df[classified_docs_df["art_id"]==int(id)][["gold","pred"]].iloc[0]
     document = documents_df[documents_df["id"]==int(id)].iloc[0]

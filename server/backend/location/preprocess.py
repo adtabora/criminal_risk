@@ -6,6 +6,67 @@ import unicodedata
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import StratifiedKFold
 
+def sentenceComposition(sent):
+    country = 0
+    state = 0
+    city = 0
+    zones = 0
+    for word in sent:
+        if word[2] == "B-Country":
+            country = 1
+        if word[2] == "B-State":
+            state = 1
+        if word[2] == "B-City":
+            city = 1
+        if word[2] in ["B-Zone","B-Col","B-Bar","B-Res"]:
+            zones = 1
+    return "%i-%i-%i-%i" %(country,state,city,zones)
+
+def convertToSentences(df, toObject=True):
+    if toObject:
+        df.tagged_content = df.tagged_content.apply(lambda x: ast.literal_eval(x))
+    print "- Convert to Sentences"
+    data = []
+    cs_id = -1  #corpus sentence id
+    for _, article in df.iterrows():
+        sentences = article.tagged_content
+        for sent_ix, sent in enumerate(sentences):
+            cs_id +=1
+            data.append([
+                article.article_id, 
+                sent_ix,
+                cs_id,
+                sent,
+                sentenceComposition(sent)
+            ])
+
+    df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","sentence", "cat"])
+    return df
+
+def sentenecesToWords(df):
+    print "- Sentences to Words"
+    data = []
+    for _, sent in df.iterrows():
+        for pos, word in enumerate(sent.sentence):
+            data.append([
+                sent.art_id, 
+                sent.sent_id,
+                sent.cs_id,
+                pos,
+                word[0],
+                word[1],
+                word[2]
+            ]) 
+    df = pd.DataFrame(data, columns=["art_id","sent_id","cs_id","pos", "word","pos_tag","iob_tag"])
+
+    #clean the iob
+    df.loc[:,"iob_tag"] = df.iob_tag.apply(lambda x: x if x not in ["B-Misc", "I-Misc"] else "none" )
+    df.loc[:,"iob_tag"] = df.iob_tag.apply(lambda x: x if x not in ["B-Res", "I-Res"] else x[:2]+"Zone" )
+    # separate the geo-entity classification from the IOB tag
+    df.loc[:, "iob"] = df.iob_tag.apply(lambda x: "I" if x != "none"  else "O" )
+    df.loc[:, "geo_type"] = df.iob_tag.apply(lambda x: x[2:] if x != "none"  else x )
+
+    return df
 
 def wordsToEntities(df):
     print "- Words to Entities"
@@ -82,10 +143,15 @@ def splitTrainTest(df):
     # Make a stratified split based on entity counts
     print "-- Stratified split"
     skf = StratifiedKFold(n_splits=5,shuffle=True, random_state= 773 )  #233
+
+    count = 0
     for train_index, test_index in skf.split( df, df.cat.tolist()):
         train_df = df.loc[train_index]
         test_df = df.loc[test_index]
-        break #we only need one iteration since it is a simple split
+
+        if count == 3:
+            break #we only need one iteration since it is a simple split
+        count += 1
 
     print "--  Distribution"
     dist_df = pd.DataFrame({})
@@ -131,7 +197,7 @@ def hot_encode(df,columns):
     return df
 
 
-def getFeatures(df, le_iob=None, le_tag=None):
+def getFeatures(df, le_iob=None, le_tag=None, root_folder="../../"):
     print "- getting features"
     # iob
     if le_iob == None:
@@ -155,10 +221,11 @@ def getFeatures(df, le_iob=None, le_tag=None):
     df.loc[:,"upper_next1"] =  upper[1:] + [0]
     # first word in sentence
     df.loc[:,"first"] = df.pos.apply(lambda x: int(x == 0) )
-    # size
-    df.loc[:,"size"] = df.word.apply(lambda x: len(x))
     # first sentence
     df.loc[:,"first_sent"] = df.sent_id.apply(lambda x: int(x==0)).values
+    # size
+    df.loc[:,"size"] = df.word.apply(lambda x: len(x))
+    
 
     # TAGS
     # add tag features by shifting the tag list 
@@ -173,20 +240,58 @@ def getFeatures(df, le_iob=None, le_tag=None):
     df.loc[:,"next_2"] = tags[2:] + tags[:2]
 
     # PREVIOUS WORDS (In spanish the type of location are written before the NE )
-    loc_types = ["colonia", "barrio", "residencial","ciudad", 
-    "aldea","zona","puente","mercado","bulevar","centro","estado"]
     words = df.word.apply(lambda x: x.lower() ).values.tolist()
-    df.loc[:,"prev_prefix_1"] = words[-1:] + words[:-1]
-    df.loc[:,"prev_prefix_1"]  = df.prev_prefix_1.apply(lambda x:  int( x in loc_types ))
-    
-    df.loc[:,"prev_prefix_2"] = words[-2:] + words[:-2]
-    df.loc[:,"prev_prefix_2"]  = df.prev_prefix_2.apply(lambda x:  int( x in loc_types ))
 
-    #Gazette features
-    countries_df = pd.read_csv("../../files/countries.csv", encoding="utf-8")
-    dep_mun_df = pd.read_csv("../../files/DepartamentosMunicipios.csv", encoding="utf-8")
-    world_cities = pd.read_csv("../../files/ciudades_mundo.csv", encoding="utf-8")
+    prev_words_1 = pd.Series(words[-1:] + words[:-1])
+    prev_words_2 = pd.Series(words[-2:] + words[:-2])
+
+
+
+    def isin_trigger(trigger_words, name):
+        df.loc[:,"trigger"+name+"1"]  = prev_words_1.apply(lambda x:  int( x in trigger_words )).values.tolist()
+        df.loc[:,"trigger"+name+"2"]  = prev_words_2.apply(lambda x:  int( x in trigger_words )).values.tolist()
+
+    #trigger state
+    state_words = ["estado", "departamento"] #review if region should be here
+    isin_trigger(state_words, "state")
+
+    #trigger city
+    city_words = ["ciudad","aldea"]
+    isin_trigger(city_words, "city")
+
+    #trigger zone?
+    zone_words = ["zona","puente","mercado","bulevar","comunidad","como","-","ruta"]
+    isin_trigger(zone_words, "zone")
     
+    # Trigger Colonia
+    isin_trigger(["colonia"], "colonia")
+
+    # Trigger Barrio
+    isin_trigger(["barrio"], "barrio")
+    # Trigger Residencial
+    isin_trigger(["residencial"], "residencial")
+
+
+
+
+    # Trigger Features
+    trigger_words = ["en","de","del","la"]
+    df.loc[:,"trigger_1"] = words[-1:] + words[:-1]
+    df.loc[:,"trigger_1"]  = df.trigger_1.apply(lambda x:  int( x in trigger_words ))
+    
+    df.loc[:,"trigger_2"] = words[-2:] + words[:-2]
+    df.loc[:,"trigger_2"]  = df.trigger_2.apply(lambda x:  int( x in trigger_words ))
+
+    #Gazetteer features
+    countries_df = pd.read_csv(root_folder + "files/countries.csv", encoding="utf-8")
+    dep_mun_df = pd.read_csv(root_folder + "files/DepartamentosMunicipios.csv", encoding="utf-8")
+    world_cities = pd.read_csv(root_folder + "files/ciudades_mundo.csv", encoding="utf-8")
+    
+    dep_mun_df= dep_mun_df.append(pd.DataFrame([
+        [u"francisco morazan",u"comayaguela"],
+        [u"francisco morazan",u"distrito central"], 
+    ],columns= dep_mun_df.columns), ignore_index=True
+    )
 
 
     #converting to ascii because of accents (tilde)
@@ -212,7 +317,6 @@ def getFeatures(df, le_iob=None, le_tag=None):
     # df = hot_encode(df,columns)
 
     
-    
     #Sentence Size
     sentence_size = pd.DataFrame({
         "cs_id":df.cs_id.value_counts().index.values,
@@ -225,16 +329,18 @@ def getFeatures(df, le_iob=None, le_tag=None):
 
     for idx in range(len(words)):
         word_list = [prev_2[idx],prev_1[idx],words[idx],next_1[idx],next_2[idx]]
-        
-        country.append( entity_in_gazette(word_list,countries_df.value.values) )
+        #.tolist() + ["ee. uu.","ee uu","eeuu"]
+        country.append( entity_in_gazette(word_list,countries_df.value.values  ) )
         state.append( entity_in_gazette(word_list,dep_mun_df.Departamento.values) )
         city.append( entity_in_gazette(word_list, cities_gazette ) )
 
     df.loc[:,"in_Country"] = country
     df.loc[:,"in_State"] = state
     df.loc[:,"in_City"] = city
+
     
     return df, le_iob, le_tag
+
 
 
 
